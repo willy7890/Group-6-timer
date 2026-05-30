@@ -3,238 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Web Chat</title>
-    <script src="https://tailwindcss.com"></script>
+    <title>Document</title>
+    <style>
+        .container { font-family: Arial, sans-serif; margin: 20px; }
+        .attendance-section { margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px; }
+        .stats { font-weight: bold; margin-bottom: 15px; background: #eee; padding: 10px; display: inline-block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin-bottom: 10px; }
+        label { display: inline-block; width: 120px; }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans h-screen flex flex-col justify-between">
+<body style="background-color: rgb(156, 115, 176);">
+    <div class="container">
+        <h1 style="color:rgb(14, 10, 31); background-color:rgb(194, 108, 77)">Group 6: Computer Engineering and Technology</h1>
+        <h2 style="color:rgb(32, 19, 84); background-color:rgb(0, 115, 255)">Discussion Timer</h2>
+        <p id="time" style="color:rgb(13, 8, 6); background-color:rgb(39, 197, 81);">Inatafuta muda...</p>
 
-    <header class="bg-gray-800 p-4 shadow flex justify-between items-center border-b border-gray-700">
-        <div>
-            <h1 class="text-xl font-bold text-teal-400">⚡ Live Chatroom</h1>
-            <p style="color:yello;">FastAPI + PostgreSQL Chat Engine</p>
-        </div>
-        <div class="bg-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2 border border-gray-600">
-            <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-            <span id="userCount" class="text-xs font-semibold text-green-400">0 Online</span>
-        </div>
-    </header>
+        <!-- ATTENDANCE -->
+        <div class="attendance-section">
+            <h2>Mahudhurio ya Members</h2>
+            
+            <!--takwimu-->
+            <div style="display: block; color: rgb(21, 22, 20);" class="stats">
+                Waliopo (Attended):<span id="count-present" style="color: green;">0</span>      | 
 
-    <main id="chat-box" class="flex-1 p-4 overflow-y-auto space-y-3 max-w-3xl w-full mx-auto">
-        <div class="bg-teal-950/40 border border-teal-800 p-3 rounded-lg text-sm text-teal-300 text-center">
-            Enter your username below to join the chat and see history.
-        </div>
-    </main>
-
-    <footer class="bg-gray-800 p-4 border-t border-gray-700">
-        <div class="max-w-3xl mx-auto flex flex-col sm:flex-row gap-2">
-            <input id="usernameInput" type="text" placeholder="Your username..." 
-                   class="bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 sm:w-1/4">
-            <div class="flex-1 flex gap-2">
-                <input id="messageInput" type="text" placeholder="Type a message..." disabled
-                       class="flex-1 bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50">
-                <button id="sendBtn" onclick="sendMessage()" disabled
-                        class="bg-teal-500 hover:bg-teal-600 text-gray-900 font-bold px-6 py-2 rounded-lg transition disabled:opacity-50">
-                    Send
-                </button>
+        
+                Wasiokuepo (Absent): <span id="count-absent" style="color: red;">0</span>
             </div>
+
+            <!-- Fomu ya kuingiza data -->
+            <form id="attendance-form" onsubmit="addAttendance(event)">
+                <div class="form-group">
+                    <label>Jina:</label>
+                    <input type="text" id="member-name" required placeholder="Mfano. Rebeca Justin">
+                </div>
+                <div class="form-group">
+                    <label>Mahudhurio:</label>
+                    <select id="attendance-status" onchange="toggleReasonField()">
+                        <option value="Present">Amehudhuria </option>
+                        <option value="Absent">Hajafika </option>
+                    </select>
+                </div>
+                <div class="form-group" id="reason-group" style="display: none;">
+                    <label>Sababu ya Kutofika:</label>
+                    <input type="text" id="absent-reason" placeholder="Mf. Anaumwa, Kajiamulia, Majukumu n.k">
+                </div>
+                <button type="submit" style="padding: 5px 15px; cursor: pointer;">Sajili Mahudhurio</button>
+            </form>
+
+            <!-- Jedwali -->
+            <h3 style="color: rgb(19, 84, 24); background-color: rgb(0, 115, 255); padding: 10px;">Orodha ya Mahudhurio</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Jina</th>
+                        <th>Hali</th>
+                        <th>Sababu (Kama hayupo)</th>
+                    </tr>
+                </thead>
+                <tbody id="attendance-table-body">
+                    <!-- Data zitaingia hapa kwa njia ya JavaScript -->
+                </tbody>
+            </table>
         </div>
-    </footer>
+    </div>
 
-    <script>
-        let ws;
-        let myUsername = "";
-        const chatBox = document.getElementById('chat-box');
-        const usernameInput = document.getElementById('usernameInput');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const userCountSpan = document.getElementById('userCount');
+<script>
+// --- mda wa kuanza discussion ---
+const startTime = new Date();
+startTime.setHours(17, 40, 0, 0);
 
-        usernameInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && usernameInput.value.trim() !== "") {
-                myUsername = usernameInput.value.trim();
-                initWebSocket(myUsername);
-                usernameInput.disabled = true;
-                messageInput.disabled = false;
-                sendBtn.disabled = false;
-                messageInput.focus();
-            }
-        });
+function updateTime() {
+    const now = new Date();
+    const diff = now - startTime;
 
-        function appendMessage(sender, text, type) {
-            const msgDiv = document.createElement('div');
-            if (type === 'system') {
-                msgDiv.className = "text-center text-xs text-gray-500 my-2 italic";
-                msgDiv.innerText = text;
-            } else {
-                const isMe = sender === myUsername;
-                msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-                msgDiv.innerHTML = `
-                    <span class="text-xs text-gray-400 mb-1">${sender}</span>
-                    <div class="${isMe ? 'bg-teal-500 text-gray-900 font-medium' : 'bg-gray-700 text-white'} px-4 py-2 rounded-2xl max-w-xs shadow">
-                        ${text}
-                    </div>
-                `;
-            }
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+    if (diff < 0) {
+        const remainingSeconds = Math.abs(Math.floor(diff / 1000));
+        const remMinutes = Math.floor(remainingSeconds / 60);
+        const remSeconds = remainingSeconds % 60;
+        document.getElementById("time").innerHTML = "Discussion bado haijaanza. Bado: " + remMinutes + " dakika, " + remSeconds + " sekunde";
+        return;
+    }
 
-        function initWebSocket(username) {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${window.location.host}/ws/${encodeURIComponent(username)}`);
+    const totalSeconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    document.getElementById("time").innerHTML = "Umechelewa kwa: " + minutes + " dakika, " + seconds + " sekunde";
+}
+setInterval(updateTime, 1000);
+updateTime();
 
-            ws.onmessage = event => {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'count') {
-                    userCountSpan.innerText = `${data.count} Online`;
-                } else if (data.type === 'history') {
-                    chatBox.innerHTML = "";
-                    data.messages.forEach(msg => {
-                        appendMessage(msg.sender, msg.text, 'chat');
-                    });
-                } else {
-                    appendMessage(data.sender, data.text, data.type);
-                }
-            };
 
-            ws.onclose = () => {
-                alert("Connection lost. Please refresh.");
-            };
-        }
+// --- SCRIPT MPYA YA MAHUDHURIO ---
+let presentCount = 0;
+let absentCount = 0;
 
-        function sendMessage() {
-            const text = messageInput.value.trim();
-            if (text !== "" && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(text);
-                messageInput.value = '';
-                messageInput.focus();
-            }
-        }
+// Ficha au onyesha kisanduku cha sababu kulingana na chaguo la mtumiaji
+function toggleReasonField() {
+    const status = document.getElementById("attendance-status").value;
+    const reasonGroup = document.getElementById("reason-group");
+    if (status === "Absent") {
+        reasonGroup.style.display = "block";
+        document.getElementById("absent-reason").required = true;
+    } else {
+        reasonGroup.style.display = "none";
+        document.getElementById("absent-reason").required = false;
+        document.getElementById("absent-reason").value = "";
+    }
+}
 
-        messageInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-    </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Web Chat</title>
-    <script src="https://tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-gray-100 font-sans h-screen flex flex-col justify-between">
+// Ongeza mwanachama kwenye jedwali na sasisha idadi
+function addAttendance(event) {
+    event.preventDefault(); // Kuzuia page isijirefresh
 
-    <header class="bg-gray-800 p-4 shadow flex justify-between items-center border-b border-gray-700">
-        <div>
-            <h1 class="text-xl font-bold text-teal-400">⚡ Live Chatroom</h1>
-            <p style="color:yello;">FastAPI + PostgreSQL Chat Engine</p>
-        </div>
-        <div class="bg-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2 border border-gray-600">
-            <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-            <span id="userCount" class="text-xs font-semibold text-green-400">0 Online</span>
-        </div>
-    </header>
+    const name = document.getElementById("member-name").value;
+    const status = document.getElementById("attendance-status").value;
+    let reason = document.getElementById("absent-reason").value;
 
-    <main id="chat-box" class="flex-1 p-4 overflow-y-auto space-y-3 max-w-3xl w-full mx-auto">
-        <div class="bg-teal-950/40 border border-teal-800 p-3 rounded-lg text-sm text-teal-300 text-center">
-            Enter your username below to join the chat and see history.
-        </div>
-    </main>
+    if (status === "Present") {
+        reason = "-";
+        presentCount++;
+    } else {
+        absentCount++;
+    }
 
-    <footer class="bg-gray-800 p-4 border-t border-gray-700">
-        <div class="max-w-3xl mx-auto flex flex-col sm:flex-row gap-2">
-            <input id="usernameInput" type="text" placeholder="Your username..." 
-                   class="bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 sm:w-1/4">
-            <div class="flex-1 flex gap-2">
-                <input id="messageInput" type="text" placeholder="Type a message..." disabled
-                       class="flex-1 bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50">
-                <button id="sendBtn" onclick="sendMessage()" disabled
-                        class="bg-teal-500 hover:bg-teal-600 text-gray-900 font-bold px-6 py-2 rounded-lg transition disabled:opacity-50">
-                    Send
-                </button>
-            </div>
-        </div>
-    </footer>
+    // Sasisha namba za takwimu kwenye screen
+    document.getElementById("count-present").innerText = presentCount;
+    document.getElementById("count-absent").innerText = absentCount;
 
-    <script>
-        let ws;
-        let myUsername = "";
-        const chatBox = document.getElementById('chat-box');
-        const usernameInput = document.getElementById('usernameInput');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const userCountSpan = document.getElementById('userCount');
+    // Tengeneza mstari mpya wa jedwali (Row)
+    const tableBody = document.getElementById("attendance-table-body");
+    const row = document.createElement("tr");
 
-        usernameInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && usernameInput.value.trim() !== "") {
-                myUsername = usernameInput.value.trim();
-                initWebSocket(myUsername);
-                usernameInput.disabled = true;
-                messageInput.disabled = false;
-                sendBtn.disabled = false;
-                messageInput.focus();
-            }
-        });
+    row.innerHTML = `
+        <td>${name}</td>
+        <td style="color: ${status === 'Present' ? 'green' : 'red'}; font-weight: bold;">${status}</td>
+        <td>${reason}</td>
+    `;
 
-        function appendMessage(sender, text, type) {
-            const msgDiv = document.createElement('div');
-            if (type === 'system') {
-                msgDiv.className = "text-center text-xs text-gray-500 my-2 italic";
-                msgDiv.innerText = text;
-            } else {
-                const isMe = sender === myUsername;
-                msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-                msgDiv.innerHTML = `
-                    <span class="text-xs text-gray-400 mb-1">${sender}</span>
-                    <div class="${isMe ? 'bg-teal-500 text-gray-900 font-medium' : 'bg-gray-700 text-white'} px-4 py-2 rounded-2xl max-w-xs shadow">
-                        ${text}
-                    </div>
-                `;
-            }
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+    tableBody.appendChild(row);
 
-        function initWebSocket(username) {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${window.location.host}/ws/${encodeURIComponent(username)}`);
-
-            ws.onmessage = event => {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'count') {
-                    userCountSpan.innerText = `${data.count} Online`;
-                } else if (data.type === 'history') {
-                    chatBox.innerHTML = "";
-                    data.messages.forEach(msg => {
-                        appendMessage(msg.sender, msg.text, 'chat');
-                    });
-                } else {
-                    appendMessage(data.sender, data.text, data.type);
-                }
-            };
-
-            ws.onclose = () => {
-                alert("Connection lost. Please refresh.");
-            };
-        }
-
-        function sendMessage() {
-            const text = messageInput.value.trim();
-            if (text !== "" && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(text);
-                messageInput.value = '';
-                messageInput.focus();
-            }
-        }
-
-        messageInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-    </script>
+    // Safisha fomu baada ya kusajili
+    document.getElementById("attendance-form").reset();
+    toggleReasonField(); // Rudisha fomu katika hali ya kawaida
+}
+</script>
 </body>
 </html>
