@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .container { font-family: Arial, sans-serif; margin: 20px; }
+        .attendance-section { margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px; }
+        .stats { font-weight: bold; margin-bottom: 15px; background: #eee; padding: 10px; display: inline-block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin-bottom: 10px; }
+        label { display: inline-block; width: 120px; }
+    </style>
+</head>
+<body style="background-color: rgb(156, 115, 176);">
+    <div class="container">
+        <h1 style="color:rgb(14, 10, 31); background-color:rgb(194, 108, 77)">Group 6: Computer Engineering and Technology</h1>
+        <h2 style="color:rgb(32, 19, 84); background-color:rgb(0, 115, 255)">Discussion Timer</h2>
+        <p id="time" style="color:rgb(13, 8, 6); background-color:rgb(39, 197, 81);">Inatafuta muda...</p>
+
+        <!-- ATTENDANCE -->
+        <div class="attendance-section">
+            <h2>Mahudhurio ya Members</h2>
+            
+            <!--takwimu-->
+            <div style="display: block; color: rgb(21, 22, 20);" class="stats">
+                Waliopo (Attended):<span id="count-present" style="color: green;">0</span>      | 
+
+        
+                Wasiokuepo (Absent): <span id="count-absent" style="color: red;">0</span>
+            </div>
+
+            <!-- Fomu ya kuingiza data -->
+            <form id="attendance-form" onsubmit="addAttendance(event)">
+                <div class="form-group">
+                    <label>Jina:</label>
+                    <input type="text" id="member-name" required placeholder="Mfano. Rebeca Justin">
+                </div>
+                <div class="form-group">
+                    <label>Mahudhurio:</label>
+                    <select id="attendance-status" onchange="toggleReasonField()">
+                        <option value="Present">Amehudhuria </option>
+                        <option value="Absent">Hajafika </option>
+                    </select>
+                </div>
+                <div class="form-group" id="reason-group" style="display: none;">
+                    <label>Sababu ya Kutofika:</label>
+                    <input type="text" id="absent-reason" placeholder="Mf. Anaumwa, Kajiamulia, Majukumu n.k">
+                </div>
+                <button type="submit" style="padding: 5px 15px; cursor: pointer;">Sajili Mahudhurio</button>
+            </form>
+
+            <!-- Jedwali -->
+            <h3 style="color: rgb(19, 84, 24); background-color: rgb(0, 115, 255); padding: 10px;">Orodha ya Mahudhurio</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Jina</th>
+                        <th>Hali</th>
+                        <th>Sababu (Kama hayupo)</th>
+                    </tr>
+                </thead>
+                <tbody id="attendance-table-body">
+                    <!-- Data zitaingia hapa kwa njia ya JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+// --- mda wa kuanza discussion ---
+const startTime = new Date();
+startTime.setHours(17, 40, 0, 0);
+
+function updateTime() {
+    const now = new Date();
+    const diff = now - startTime;
+
+    if (diff < 0) {
+        const remainingSeconds = Math.abs(Math.floor(diff / 1000));
+        const remMinutes = Math.floor(remainingSeconds / 60);
+        const remSeconds = remainingSeconds % 60;
+        document.getElementById("time").innerHTML = "Discussion bado haijaanza. Bado: " + remMinutes + " dakika, " + remSeconds + " sekunde";
+        return;
+    }
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    document.getElementById("time").innerHTML = "Umechelewa kwa: " + minutes + " dakika, " + seconds + " sekunde";
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+
+// --- SCRIPT MPYA YA MAHUDHURIO ---
+let presentCount = 0;
+let absentCount = 0;
+
+// Ficha au onyesha kisanduku cha sababu kulingana na chaguo la mtumiaji
+function toggleReasonField() {
+    const status = document.getElementById("attendance-status").value;
+    const reasonGroup = document.getElementById("reason-group");
+    if (status === "Absent") {
+        reasonGroup.style.display = "block";
+        document.getElementById("absent-reason").required = true;
+    } else {
+        reasonGroup.style.display = "none";
+        document.getElementById("absent-reason").required = false;
+        document.getElementById("absent-reason").value = "";
+    }
+}
+
+// Ongeza mwanachama kwenye jedwali na sasisha idadi
+function addAttendance(event) {
+    event.preventDefault(); // Kuzuia page isijirefresh
+
+    const name = document.getElementById("member-name").value;
+    const status = document.getElementById("attendance-status").value;
+    let reason = document.getElementById("absent-reason").value;
+
+    if (status === "Present") {
+        reason = "-";
+        presentCount++;
+    } else {
+        absentCount++;
+    }
+
+    // Sasisha namba za takwimu kwenye screen
+    document.getElementById("count-present").innerText = presentCount;
+    document.getElementById("count-absent").innerText = absentCount;
+
+    // Tengeneza mstari mpya wa jedwali (Row)
+    const tableBody = document.getElementById("attendance-table-body");
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td>${name}</td>
+        <td style="color: ${status === 'Present' ? 'green' : 'red'}; font-weight: bold;">${status}</td>
+        <td>${reason}</td>
+    `;
+
+    tableBody.appendChild(row);
+
+    // Safisha fomu baada ya kusajili
+    document.getElementById("attendance-form").reset();
+    toggleReasonField(); // Rudisha fomu katika hali ya kawaida
+}
+</script>
+</body>
+</html>
