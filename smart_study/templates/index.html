@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Study Pro-Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary-color:#1565c0;--ordinary-color:#2e7d32;--advanced-color:#6a1b9a;
+    --bg:#f4f6f9;--white:#ffffff;--dark:#1e293b;--muted:#64748b;
+    --radius:16px;--shadow:0 4px 20px rgba(0,0,0,0.08);--active:#1565c0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Andika',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh;}
+  .topbar{background:var(--dark);color:white;padding:1rem 2rem;display:flex;align-items:center;
+    gap:1rem;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+  .topbar .logo{font-size:1.5rem;font-weight:900;letter-spacing:-1px;}
+  .topbar .logo span{color:#facc15;}
+  .breadcrumb{display:flex;align-items:center;gap:.5rem;font-size:.82rem;
+    color:rgba(255,255,255,.6);margin-left:auto;flex-wrap:wrap;}
+  .breadcrumb .crumb{cursor:pointer;color:rgba(255,255,255,.85);transition:color .2s;}
+  .breadcrumb .crumb:hover{color:#facc15;}
+  .breadcrumb .sep{opacity:.4;}
+  .home-btn{background:none;border:1px solid rgba(255,255,255,.3);color:white;
+    padding:.4rem 1rem;border-radius:20px;cursor:pointer;font-family:inherit;
+    font-size:.8rem;transition:all .2s;}
+  .home-btn:hover{background:rgba(255,255,255,.1);}
+  .page{display:none;padding:2rem;max-width:95%;margin:0 auto;}
+  .page.active{display:block;animation:fadeUp .35s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+  .page-title{text-align:center;margin-bottom:2.5rem;}
+  .page-title h1{font-size:2.2rem;font-weight:900;margin-bottom:.5rem;}
+  .page-title p{color:var(--muted);font-size:1rem;}
+  .levels-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;}
+  .level-card{border-radius:var(--radius);padding:2.5rem 2rem;cursor:pointer;
+    transition:transform .25s,box-shadow .25s;color:white;overflow:hidden;}
+  .level-card:hover{transform:translateY(-6px);box-shadow:0 12px 32px rgba(0,0,0,0.15);}
+  .level-card.primary {background:linear-gradient(135deg,#1565c0,#1976d2);}
+  .level-card.ordinary{background:linear-gradient(135deg,#2e7d32,#388e3c);}
+  .level-card.advanced{background:linear-gradient(135deg,#6a1b9a,#7b1fa2);}
+  .level-card .icon{font-size:3rem;margin-bottom:1rem;display:block;}
+  .level-card h2{font-size:1.6rem;font-weight:900;margin-bottom:.4rem;}
+  .level-card p{font-size:.88rem;opacity:.85;line-height:1.5;}
+  .classes-header{display:flex;align-items:center;gap:1rem;margin-bottom:2rem;}
+  .badge{padding:.4rem 1rem;border-radius:20px;font-size:.82rem;font-weight:700;color:white;}
+  .classes-header h2{font-size:1.5rem;font-weight:800;}
+  .classes-grid,.subjects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.2rem;}
+  .class-card,.subject-card{background:white;border-radius:var(--radius);padding:1.8rem 1.5rem;
+    cursor:pointer;transition:all .22s;border:2px solid transparent;box-shadow:var(--shadow);text-align:center;}
+  .class-card:hover,.subject-card:hover{border-color:var(--active);transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+  .class-icon,.subj-icon{font-size:2.5rem;margin-bottom:.8rem;}
+  .class-card h3,.subject-card h3{font-size:1.1rem;font-weight:800;}
+  .notes-layout{display:grid;grid-template-columns:300px 1fr;gap:1.5rem;align-items:start;}
+  .notes-sidebar{background:white;border-radius:var(--radius);padding:1.2rem;
+    box-shadow:var(--shadow);position:sticky;top:80px;}
+  .notes-sidebar h3{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #e2e8f0;}
+  .note-item{padding:.9rem 1rem;border-radius:10px;cursor:pointer;transition:all .2s;
+    margin-bottom:.4rem;border:2px solid transparent;}
+  .note-item:hover{background:#f1f5f9;}
+  .note-item.active{background:#eff6ff;border-color:#1565c0;}
+  .note-item h4{font-size:.88rem;font-weight:700;}
+  .reader-placeholder{display:flex;flex-direction:column;align-items:center;
+    justify-content:center;height:400px;color:var(--muted);text-align:center;gap:1rem;}
+  .reader-placeholder .big-icon{font-size:4rem;opacity:.3;}
+  .note-reader{background-color:#fefce8;border-radius:24px;padding:1.5rem;
+    box-shadow:0 10px 25px rgba(234,179,8,0.15);min-height:500px;border:4px dashed #fef08a;}
+  .note-reading-header{border-bottom:2px solid #f1f5f9;padding-bottom:1rem;margin-bottom:1.5rem;}
+  .note-reading-title{font-family:'Andika',serif;font-size:2rem;font-weight:700;line-height:1.3;}
+  .note-reading-body{font-size:1.1rem;line-height:1.7;color:#1e40af;white-space:pre-wrap;
+    font-family:'Andika','Comic Neue',sans-serif;font-weight:700;}
+  .note-reading-body .highlight{color:#dc2626;font-weight:800;}
+  .empty-message{text-align:center;color:var(--muted);padding:2rem;font-size:.9rem;}
+  .loading{text-align:center;color:var(--muted);padding:2rem;}
+
+  /* ── Write-Note Panel ────────────────────────────── */
+  .write-panel{background:white;border-radius:var(--radius);padding:1.5rem;
+    box-shadow:var(--shadow);margin-top:1.5rem;}
+  .write-panel h3{font-size:1rem;font-weight:800;margin-bottom:1rem;color:var(--dark);}
+  .write-panel input,.write-panel textarea{width:100%;padding:.8rem 1rem;margin-bottom:.8rem;
+    border:2px solid #e2e8f0;border-radius:10px;font-family:'Andika',sans-serif;
+    font-size:.95rem;transition:border-color .2s;resize:vertical;}
+  .write-panel input:focus,.write-panel textarea:focus{outline:none;border-color:#1565c0;}
+  .write-panel textarea{min-height:120px;}
+  .btn{padding:.6rem 1.4rem;border:none;border-radius:10px;font-family:'Andika',sans-serif;
+    font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;}
+  .btn-primary{background:#1565c0;color:white;}
+  .btn-primary:hover{background:#0d47a1;}
+  .btn-danger{background:#dc2626;color:white;margin-left:.5rem;}
+  .btn-danger:hover{background:#b91c1c;}
+  .success-msg{color:#16a34a;font-weight:700;font-size:.9rem;margin-top:.5rem;}
+
+  @media(max-width:720px){
+    .notes-layout{grid-template-columns:1fr;}
+    .notes-sidebar{position:static;}
+    .page{padding:1.5rem 1rem;max-width:100%;}
+    .levels-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><b style="color:aqua;">Smart Study</b> <i>pro</i> <span>Notes</span></div>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <button class="home-btn" onclick="goHome()">🏠 Home</button>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="page-title">
+    <h1>📚 ALL LEVEL NOTES</h1>
+    <p>Choose an education level to start reading</p>
+  </div>
+  <div class="levels-grid" id="levelsGrid"><div class="loading">Loading levels…</div></div>
+</div>
+
+<!-- CLASSES -->
+<div class="page" id="page-classes">
+  <div class="classes-header">
+    <span class="badge" id="levelBadge"></span>
+    <h2>Chagua Darasa / Kidato</h2>
+  </div>
+  <div class="classes-grid" id="classesGrid"></div>
+</div>
+
+<!-- SUBJECTS -->
+<div class="page" id="page-subjects">
+  <div class="classes-header">
+    <span class="badge" id="levelBadge2"></span>
+    <h2 id="subjectsTitle"></h2>
+  </div>
+  <div class="subjects-grid" id="subjectsGrid"></div>
+</div>
+
+<!-- NOTES -->
+<div class="page" id="page-notes">
+  <div class="classes-header">
+    <span class="badge" id="levelBadge3"></span>
+    <h2 id="notesTitle"></h2>
+  </div>
+  <div class="notes-layout">
+    <div>
+      <div class="notes-sidebar">
+        <h3>Mada Zilizopo</h3>
+        <div id="notesList"></div>
+      </div>
+      <!-- ── Write / Edit Panel ── -->
+      <div class="write-panel" id="writePanel">
+        <h3>✏️ Andika Note Mpya</h3>
+        <input  id="noteTitle" type="text"     placeholder="Kichwa cha note (e.g. Sura ya 7: Mada)">
+        <textarea id="noteBody" placeholder="Andika maudhui ya note hapa…"></textarea>
+        <button class="btn btn-primary" onclick="submitNote()">💾 Hifadhi Note</button>
+        <button class="btn btn-danger"  id="btnDelete" style="display:none" onclick="deleteCurrentNote()">🗑 Futa</button>
+        <button class="btn" style="background:#6b7280;color:white;margin-left:.5rem;" onclick="clearForm()">✖ Ghairi</button>
+        <div class="success-msg" id="writeMsg"></div>
+      </div>
+    </div>
+    <div class="note-reader" id="noteReader">
+      <div class="reader-placeholder">
+        <div class="big-icon">📖</div>
+        <p>Chagua mada upande wa kushoto ili kuanza kusoma</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const S = { level:null, levelLabel:null, levelColor:null,
+            classId:null, classLabel:null,
+            subjectId:null, subjectLabel:null,
+            activeIndex:null };
+
+// ── API helpers ────────────────────────────────────────────────────────────
+const API = "/api";
+async function apiFetch(path, opts={}) {
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── Page routing ───────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  const parts = [`<span class="crumb" onclick="goHome()">🏠 Nyumbani</span>`];
+  if (S.level) {
+    parts.push(`<span class="sep">›</span>`);
+    parts.push(`<span class="crumb" onclick="goToClasses('${S.level}','${S.levelLabel}','${S.levelColor}')">${S.levelLabel}</span>`);
+  }
+  if (S.classId) {
+    parts.push(`<span class="sep">›</span>`);
+    parts.push(`<span class="crumb" onclick="goToSubjects('${S.classId}','${S.classLabel}')">${S.classLabel}</span>`);
+  }
+  if (S.subjectId) {
+    parts.push(`<span class="sep">›</span>`);
+    parts.push(`<span class="crumb">${S.subjectLabel}</span>`);
+  }
+  bc.innerHTML = parts.join('');
+}
+
+// ── HOME ───────────────────────────────────────────────────────────────────
+async function goHome() {
+  Object.assign(S,{level:null,levelLabel:null,levelColor:null,
+    classId:null,classLabel:null,subjectId:null,subjectLabel:null,activeIndex:null});
+  updateBreadcrumb();
+  showPage('home');
+  const grid = document.getElementById('levelsGrid');
+  grid.innerHTML = '<div class="loading">Loading…</div>';
+  const levels = await apiFetch('/levels');
+  const ICONS = {primary:'🏫', ordinary:'🎓', advanced:'🔬'};
+  const DESC  = {primary:'Standard 1 – 7 (Basic Education)',
+                 ordinary:'Form 1 – 4 (O-Level)',
+                 advanced:'Form 5 – 6 (A-Level)'};
+  grid.innerHTML = levels.map(l=>`
+    <div class="level-card ${l.id}" onclick="goToClasses('${l.id}','${l.label}','${l.color}')">
+      <span class="icon">${ICONS[l.id]||'📚'}</span>
+      <h2>${l.label}</h2>
+      <p>${DESC[l.id]||''}</p>
+    </div>`).join('');
+}
+
+// ── CLASSES ────────────────────────────────────────────────────────────────
+async function goToClasses(level, label, color) {
+  S.level=level; S.levelLabel=label; S.levelColor=color;
+  S.classId=null; S.classLabel=null; S.subjectId=null; S.subjectLabel=null;
+  const badge = document.getElementById('levelBadge');
+  badge.textContent=label; badge.style.background=color;
+  const grid = document.getElementById('classesGrid');
+  grid.innerHTML='<div class="loading">Loading…</div>';
+  updateBreadcrumb(); showPage('classes');
+  const classes = await apiFetch(`/levels/${level}/classes`);
+  grid.innerHTML = classes.map(c=>`
+    <div class="class-card" onclick="goToSubjects('${c.id}','${c.label}')"
+         style="--active:${color}">
+      <div class="class-icon">${c.icon}</div>
+      <h3>${c.label}</h3>
+    </div>`).join('');
+}
+
+// ── SUBJECTS ───────────────────────────────────────────────────────────────
+async function goToSubjects(classId, classLabel) {
+  S.classId=classId; S.classLabel=classLabel;
+  S.subjectId=null; S.subjectLabel=null;
+  const badge = document.getElementById('levelBadge2');
+  badge.textContent=S.levelLabel; badge.style.background=S.levelColor;
+  document.getElementById('subjectsTitle').textContent = `${classLabel} — Chagua Somo`;
+  const grid = document.getElementById('subjectsGrid');
+  grid.innerHTML='<div class="loading">Loading…</div>';
+  updateBreadcrumb(); showPage('subjects');
+  const subjects = await apiFetch(`/levels/${S.level}/subjects`);
+  grid.innerHTML = subjects.map(s=>`
+    <div class="subject-card" onclick="goToNotes('${s.id}','${s.label}')"
+         style="--active:${S.levelColor}">
+      <div class="subj-icon">${s.icon}</div>
+      <h3>${s.label}</h3>
+    </div>`).join('');
+}
+
+// ── NOTES ──────────────────────────────────────────────────────────────────
+async function goToNotes(subjectId, subjectLabel) {
+  S.subjectId=subjectId; S.subjectLabel=subjectLabel; S.activeIndex=null;
+  const badge = document.getElementById('levelBadge3');
+  badge.textContent=S.levelLabel; badge.style.background=S.levelColor;
+  document.getElementById('notesTitle').textContent=`${S.classLabel} › ${subjectLabel}`;
+  clearForm();
+  resetReader();
+  updateBreadcrumb(); showPage('notes');
+  await renderSidebar();
+  const notes = await apiFetch(notesBase());
+  if (notes.length>0) openNote(0);
+}
+
+function notesBase() {
+  return `/levels/${S.level}/classes/${S.classId}/subjects/${S.subjectId}/notes`;
+}
+
+async function renderSidebar() {
+  const list = document.getElementById('notesList');
+  list.innerHTML='<div class="loading">Loading…</div>';
+  const notes = await apiFetch(notesBase());
+  if (!notes.length) {
+    list.innerHTML='<div class="empty-message">Notes za somo hili bado hazijawekwa.</div>';
+    return;
+  }
+  list.innerHTML = notes.map((n,i)=>`
+    <div class="note-item${i===S.activeIndex?' active':''}" onclick="openNote(${i})" id="ni-${i}">
+      <h4>${esc(n.title)}</h4>
+    </div>`).join('');
+}
+
+async function openNote(index) {
+  S.activeIndex=index;
+  // Highlight sidebar
+  document.querySelectorAll('.note-item').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('ni-'+index);
+  if(el) el.classList.add('active');
+
+  const note = await apiFetch(`${notesBase()}/${index}`);
+  const reader = document.getElementById('noteReader');
+
+  if (note.type==='interactive') {
+    reader.innerHTML=`
+      <div class="note-reading-header">
+        <h2 class="note-reading-title">${esc(note.title)}</h2>
+      </div>
+      <div class="note-reading-body">${buildInteractive()}</div>`;
+    attachInteractiveHandlers();
+  } else {
+    reader.innerHTML=`
+      <div class="note-reading-header">
+        <h2 class="note-reading-title">${esc(note.title)}</h2>
+      </div>
+      <div class="note-reading-body"></div>`;
+    const body = reader.querySelector('.note-reading-body');
+    if (note.body_html) {
+      body.innerHTML = note.body_html;
+      body.style.whiteSpace='normal';
+    } else {
+      body.textContent = note.body||'Hakuna mwili wa note.';
+    }
+  }
+
+  // Pre-fill write form for editing
+  document.getElementById('noteTitle').value = note.title;
+  document.getElementById('noteBody').value  = note.body||'';
+  document.getElementById('btnDelete').style.display='inline-block';
+}
+
+function resetReader() {
+  document.getElementById('noteReader').innerHTML=`
+    <div class="reader-placeholder">
+      <div class="big-icon">📖</div>
+      <p>Chagua mada upande wa kushoto ili kuanza kusoma</p>
+    </div>`;
+}
+
+// ── Write / Edit / Delete ──────────────────────────────────────────────────
+async function submitNote() {
+  const title = document.getElementById('noteTitle').value.trim();
+  const body  = document.getElementById('noteBody').value.trim();
+  if (!title) { showMsg('⚠ Weka kichwa cha note.','#dc2626'); return; }
+
+  const payload = { title, body };
+  let url  = notesBase();
+  let method = 'POST';
+
+  if (S.activeIndex !== null) {
+    url   += '/' + S.activeIndex;
+    method = 'PUT';
+  }
+
+  await apiFetch(url, {
+    method,
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+
+  showMsg('✅ Note imehifadhiwa!','#16a34a');
+  clearForm();
+  await renderSidebar();
+}
+
+async function deleteCurrentNote() {
+  if (S.activeIndex===null) return;
+  if (!confirm('Una uhakika unataka kufuta note hii?')) return;
+  await apiFetch(`${notesBase()}/${S.activeIndex}`,{method:'DELETE'});
+  S.activeIndex=null;
+  resetReader(); clearForm();
+  await renderSidebar();
+  showMsg('🗑 Note imefutwa.','#dc2626');
+}
+
+function clearForm() {
+  document.getElementById('noteTitle').value='';
+  document.getElementById('noteBody').value='';
+  document.getElementById('btnDelete').style.display='none';
+  S.activeIndex=null;
+}
+
+function showMsg(text,color) {
+  const m=document.getElementById('writeMsg');
+  m.textContent=text; m.style.color=color;
+  setTimeout(()=>m.textContent='',3000);
+}
+
+// ── Interactive counting widget ───────────────────────────────────────────
+function buildInteractive() {
+  const cells = Array.from({length:100},(_,i)=>`
+    <div id="cell-${i+1}" style="padding:.5rem .2rem;text-align:center;border-radius:6px;
+      background:white;border:2px solid #e5e7eb;font-weight:700;font-size:.9rem;
+      transition:all .18s;">${i+1}</div>`).join('');
+  return `
+    <p style="font-size:1.1rem;margin-bottom:1rem;">Bonyeza kitufe hapa chini kuona namba moja moja!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <button id="hesabu-start" class="btn btn-primary">▶ Anza</button>
+      <button id="hesabu-stop"  class="btn btn-danger">⏹ Simama</button>
+      <button id="hesabu-reset" class="btn" style="background:#6b7280;color:white;">🔄 Upya</button>
+    </div>
+    <div id="hesabu-display" style="min-height:100px;display:flex;align-items:center;
+      justify-content:center;font-size:4rem;font-weight:900;color:#1565c0;
+      background:#eff6ff;border-radius:12px;margin-bottom:1rem;">—</div>
+    <div id="hesabu-maneno" style="text-align:center;font-size:1.5rem;font-weight:700;
+      color:#374151;margin-bottom:1rem;min-height:2rem;"></div>
+    <div style="background:#f3f4f6;border-radius:10px;padding:1rem;">
+      <p style="font-weight:800;margin-bottom:.8rem;">📋 Jedwali la Nambari:</p>
+      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;">${cells}</div>
+    </div>`;
+}
+
+const MANENO=['sifuri','Moja','Mbili','Tatu','Nne','Tano','Sita','Saba','Nane','Tisa','Kumi'];
+let loopTimer=null, nambariSasa=0;
+
+function attachInteractiveHandlers() {
+  document.getElementById('hesabu-start').onclick=hesabuLoop;
+  document.getElementById('hesabu-stop').onclick=simamishaLoop;
+  document.getElementById('hesabu-reset').onclick=resetLoop;
+  resetLoop();
+}
+function hesabuLoop(){simamishaLoop();nambariSasa=0;resetVizuizi();hatua();}
+function hatua(){
+  nambariSasa++;
+  if(nambariSasa>100){
+    document.getElementById('hesabu-maneno').textContent='🎉 Hongera! Umehesabu hadi 100!';
+    document.getElementById('hesabu-display').textContent='100🔥';
+    document.getElementById('hesabu-display').style.color='#16a34a';
+    highlightCell(10);return;
+  }
+  document.getElementById('hesabu-display').textContent=nambariSasa;
+  document.getElementById('hesabu-maneno').textContent=MANENO[nambariSasa]||nambariSasa+'';
+  highlightCell(nambariSasa);
+  loopTimer=setTimeout(hatua,1000);
+}
+function simamishaLoop(){if(loopTimer){clearTimeout(loopTimer);loopTimer=null;}}
+function resetLoop(){
+  simamishaLoop();nambariSasa=0;
+  const d=document.getElementById('hesabu-display');
+  const m=document.getElementById('hesabu-maneno');
+  if(d){d.textContent='—';d.style.color='#1565c0';}
+  if(m) m.textContent='';
+  resetVizuizi();
+}
+function resetVizuizi(){
+  document.querySelectorAll('[id^="cell-"]').forEach(c=>{
+    c.style.background='white';c.style.border='2px solid #e5e7eb';c.style.color='#111827';});
+}
+function highlightCell(n){
+  resetVizuizi();
+  const c=document.getElementById('cell-'+n);
+  if(c){c.style.background='#bfdbfe';c.style.border='2px solid #2563eb';}
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Boot
+goHome();
+</script>
+</body>
+</html>

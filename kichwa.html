@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elimu Notes — Maktaba ya Masomo</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f4ff;
+    --dark: #1a1a2e;
+    --muted: #6b7280;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.10);
+    --active: #1565c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+  .topbar { background: var(--dark); color: white; padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+  .topbar .logo { font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; }
+  .topbar .logo span { color: #facc15; }
+  .breadcrumb { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: rgba(255,255,255,0.6); margin-left: auto; flex-wrap: wrap; }
+  .breadcrumb .crumb { cursor: pointer; color: rgba(255,255,255,0.85); transition: color 0.2s; }
+  .breadcrumb .crumb:hover { color: #facc15; }
+  .breadcrumb .sep { opacity: 0.4; }
+  .home-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 0.8rem; transition: all 0.2s; }
+  .home-btn:hover { background: rgba(255,255,255,0.1); }
+  .page { display: none; padding: 2.5rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; animation: fadeUp 0.35s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .page-title { text-align: center; margin-bottom: 2.5rem; }
+  .page-title h1 { font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem; }
+  .page-title p { color: var(--muted); font-size: 1rem; }
+  .levels-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .level-card { border-radius: var(--radius); padding: 2.5rem 2rem; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s; position: relative; overflow: hidden; color: white; }
+  .level-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
+  .level-card::before { content: ''; position: absolute; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.08); top: -40px; right: -40px; }
+  .level-card::after { content: ''; position: absolute; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.05); bottom: -20px; left: 20px; }
+  .level-card.primary  { background: linear-gradient(135deg, #1565c0, #1976d2); }
+  .level-card.ordinary { background: linear-gradient(135deg, #2e7d32, #388e3c); }
+  .level-card.advanced { background: linear-gradient(135deg, #6a1b9a, #7b1fa2); }
+  .level-card .icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+  .level-card h2 { font-size: 1.6rem; font-weight: 900; margin-bottom: 0.4rem; }
+  .level-card p  { font-size: 0.88rem; opacity: 0.85; line-height: 1.5; }
+  .level-card .arrow { position: absolute; right: 1.5rem; bottom: 1.5rem; font-size: 1.5rem; opacity: 0.6; }
+  .section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+  .badge { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 700; color: white; }
+  .badge.primary  { background: #1565c0; }
+  .badge.ordinary { background: #2e7d32; }
+  .badge.advanced { background: #6a1b9a; }
+  .section-header h2 { font-size: 1.5rem; font-weight: 800; }
+  .classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.2rem; }
+  .class-card { background: white; border-radius: var(--radius); padding: 1.8rem 1.5rem; cursor: pointer; transition: all 0.22s; border: 2px solid transparent; box-shadow: var(--shadow); text-align: center; }
+  .class-card:hover { border-color: var(--active); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  .class-card .class-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+  .class-card h3 { font-size: 1.1rem; font-weight: 800; }
+  .class-card p  { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+  .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+  .subject-card { background: white; border-radius: var(--radius); padding: 1.5rem; cursor: pointer; transition: all 0.22s; box-shadow: var(--shadow); display: flex; align-items: center; gap: 1rem; border-left: 4px solid transparent; }
+  .subject-card:hover { border-left-color: var(--active); transform: translateX(4px); }
+  .subject-card .subj-icon { font-size: 2rem; }
+  .subject-card h3 { font-size: 1rem; font-weight: 700; }
+  .subject-card p  { font-size: 0.75rem; color: var(--muted); }
+  .notes-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; align-items: start; }
+  .notes-sidebar { background: white; border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--shadow); position: sticky; top: 80px; }
+  .notes-sidebar h3 { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid #e5e7eb; }
+  .note-item { padding: 0.9rem 1rem; border-radius: 10px; cursor: pointer; transition: all 0.2s; margin-bottom: 0.4rem; border: 2px solid transparent; }
+  .note-item:hover { background: #f3f4f6; }
+  .note-item.active { background: #eff6ff; border-color: #1565c0; }
+  .note-item h4 { font-size: 0.88rem; font-weight: 700; }
+  .note-item p  { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
+  .note-reader { background: white; border-radius: var(--radius); padding: 2.5rem; box-shadow: var(--shadow); min-height: 500px; }
+  .reader-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--muted); text-align: center; gap: 1rem; }
+  .reader-placeholder .big-icon { font-size: 4rem; opacity: 0.3; }
+  .note-reading-header { border-bottom: 2px solid #f3f4f6; padding-bottom: 1.2rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; }
+  .note-reading-title { font-family: 'Merriweather', serif; font-size: 1.8rem; font-weight: 700; line-height: 1.3; max-width: 70%; }
+  .note-date { font-size: 0.75rem; color: var(--muted); background: #f3f4f6; padding: 0.3rem 0.8rem; border-radius: 20px; }
+  .note-reading-body { font-size: 1rem; line-height: 1.9; color: #374151; white-space: pre-wrap; font-family: 'Merriweather', serif; }
+  .sidebar-empty { text-align: center; padding: 1.5rem 0.5rem; color: var(--muted); font-size: 0.82rem; line-height: 1.7; }
+  @media (max-width: 720px) {
+    .notes-layout { grid-template-columns: 1fr; }
+    .notes-sidebar { position: static; }
+    .topbar { padding: 0.8rem 1rem; }
+    .page { padding: 1.5rem 1rem; }
+    .note-reading-title { font-size: 1.3rem; max-width: 100%; }
+    .note-reading-header { flex-direction: column; gap: 0.5rem; }
+    .levels-grid { grid-template-columns: 1fr; }
+  }
+  @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Elimu <span>Notes</span></div>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <button class="home-btn" onclick="goHome()">🏠 Nyumbani</button>
+</div>
+
+<div class="page active" id="page-home">
+  <div class="page-title">
+    <h1>📚 Elimu Notes</h1>
+    <p>Chagua kiwango chako cha elimu kuanza kusoma notes</p>
+  </div>
+  <div class="levels-grid">
+    <div class="level-card primary" onclick="goToClasses('primary')">
+      <span class="icon">🏫</span><h2>Primary Level</h2>
+      <p>Darasa la 1 hadi 7 — Misingi ya elimu ya msingi</p>
+      <span class="arrow">→</span>
+    </div>
+    <div class="level-card ordinary" onclick="goToClasses('ordinary')">
+      <span class="icon">🎓</span><h2>Ordinary Level</h2>
+      <p>Form 1 hadi 4 — Sekondari ya kawaida (O-Level)</p>
+      <span class="arrow">→</span>
+    </div>
+    <div class="level-card advanced" onclick="goToClasses('advanced')">
+      <span class="icon">🔬</span><h2>Advanced Level</h2>
+      <p>Form 5 na 6 — Sekondari ya juu (A-Level)</p>
+      <span class="arrow">→</span>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-classes">
+  <div class="section-header">
+    <span class="badge" id="levelBadge"></span>
+    <h2 id="classesTitle"></h2>
+  </div>
+  <div class="classes-grid" id="classesGrid"></div>
+</div>
+
+<div class="page" id="page-subjects">
+  <div class="section-header">
+    <span class="badge" id="levelBadge2"></span>
+    <h2 id="subjectsTitle"></h2>
+  </div>
+  <div class="subjects-grid" id="subjectsGrid"></div>
+</div>
+
+<div class="page" id="page-notes">
+  <div class="section-header">
+    <span class="badge" id="levelBadge3"></span>
+    <h2 id="notesTitle"></h2>
+  </div>
+  <div class="notes-layout">
+    <div class="notes-sidebar">
+      <h3>📄 Orodha ya Notes</h3>
+      <div id="notesList"></div>
+      <div class="sidebar-empty" id="notesEmpty" style="display:none">📭 Hakuna notes bado katika somo hili.</div>
+    </div>
+    <div class="note-reader" id="noteReader">
+      <div class="reader-placeholder">
+        <div class="big-icon">📖</div>
+        <p>Chagua note kushoto kusoma</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// NOTES DATA — HAPA NDIPO UNAANDIKA NOTES
+// ════════════════════════════════════════════
+// type: "interactive" = HTML na buttons
+// type: "text"        = maandishi ya kawaida
+//
+// KEY format: "level__classId__subjectId"
+// Mfano: "primary__std1__math"
+// ════════════════════════════════════════════
+
+const NOTES_DATA = {
+
+  // ── PRIMARY › DARASA LA 1 › HESABU ──────────────────
+  "primary__std1__math": [
+    {
+      id: "p1m1",
+      title: "Kuhesabu Nambari 1 hadi 10",
+      date: "2024-01-10",
+      type: "interactive",
+      body: `
+        <p style="font-size:1rem;line-height:1.8;margin-bottom:1.2rem;">
+          Nambari ni ishara zinazotumiwa kuhesabu vitu.
+          Bonyeza kitufe hapa chini kuona nambari moja moja!
+        </p>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+          <button onclick="hesabuLoop()" style="padding:0.7rem 1.5rem;background:#1565c0;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">▶ Anza Kuhesabu</button>
+          <button onclick="simamishaLoop()" style="padding:0.7rem 1.5rem;background:#dc2626;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">⏹ Simama</button>
+          <button onclick="resetLoop()" style="padding:0.7rem 1.5rem;background:#6b7280;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">🔄 Upya</button>
+        </div>
+        <div id="hesabu-display" style="min-height:80px;display:flex;align-items:center;justify-content:center;font-size:5rem;font-weight:900;color:#1565c0;background:#eff6ff;border-radius:16px;margin-bottom:1.5rem;transition:all 0.3s;">—</div>
+        <div id="hesabu-maneno" style="text-align:center;font-size:1.4rem;font-weight:700;color:#374151;margin-bottom:1.5rem;min-height:2rem;"></div>
+        <div id="hesabu-dots" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem;"></div>
+        <div style="background:#f3f4f6;border-radius:12px;padding:1.2rem;">
+          <p style="font-weight:800;margin-bottom:0.8rem;">📋 Jedwali la Nambari:</p>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;">
+            <div id="cell-1"  class="ncell">1</div><div id="cell-2"  class="ncell">2</div>
+            <div id="cell-3"  class="ncell">3</div><div id="cell-4"  class="ncell">4</div>
+            <div id="cell-5"  class="ncell">5</div><div id="cell-6"  class="ncell">6</div>
+            <div id="cell-7"  class="ncell">7</div><div id="cell-8"  class="ncell">8</div>
+            <div id="cell-9"  class="ncell">9</div><div id="cell-10" class="ncell">10</div>
+          </div>
+        </div>
+        <style>
+          .ncell { padding:0.6rem;text-align:center;border-radius:8px;background:white;border:2px solid #e5e7eb;font-weight:700;font-size:0.95rem;transition:all 0.3s; }
+          .ncell.active { background:#1565c0;border-color:#1565c0;color:white;transform:scale(1.1); }
+        </style>
+        <script>
+          const MANENO=['','Moja','Mbili','Tatu','Nne','Tano','Sita','Saba','Nane','Tisa','Kumi'];
+          let loopTimer=null, nambariSasa=0;
+          function hesabuLoop(){ simamishaLoop(); nambariSasa=0; resetVizuizi(); hatua(); }
+          function hatua(){
+            nambariSasa++;
+            if(nambariSasa>10){ document.getElementById('hesabu-maneno').textContent='🎉 Hongera! Umehesabu hadi 10!'; return; }
+            const d=document.getElementById('hesabu-display');
+            d.textContent=nambariSasa; d.style.transform='scale(1.2)';
+            setTimeout(()=>d.style.transform='scale(1)',200);
+            document.getElementById('hesabu-maneno').textContent=MANENO[nambariSasa];
+            const dots=document.getElementById('hesabu-dots'); dots.innerHTML='';
+            for(let i=0;i<nambariSasa;i++){
+              const dot=document.createElement('div');
+              dot.style.cssText='width:36px;height:36px;border-radius:50%;background:#1565c0;animation:popIn 0.3s ease;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;';
+              dot.textContent=i+1; dots.appendChild(dot);
+            }
+            resetVizuizi();
+            document.getElementById('cell-'+nambariSasa).classList.add('active');
+            loopTimer=setTimeout(hatua,1200);
+          }
+          function simamishaLoop(){ clearTimeout(loopTimer); loopTimer=null; }
+          function resetLoop(){
+            simamishaLoop(); nambariSasa=0;
+            document.getElementById('hesabu-display').textContent='—';
+            document.getElementById('hesabu-maneno').textContent='';
+            document.getElementById('hesabu-dots').innerHTML='';
+            resetVizuizi();
+          }
+          function resetVizuizi(){ for(let i=1;i<=10;i++){ const c=document.getElementById('cell-'+i); if(c)c.className='ncell'; } }
+        <\/script>
+      `
+    },
+    {
+      id: "p1m2",
+      title: "Kujumlisha Nambari Ndogo",
+      date: "2024-01-15",
+      type: "interactive",
+      body: `
+        <p style="font-size:1rem;line-height:1.8;margin-bottom:1.5rem;">
+          Kujumlisha maana yake ni <strong>kuongeza vitu pamoja</strong>. Ishara ni <strong style="color:#1565c0;font-size:1.3rem;">+</strong>
+        </p>
+        <div style="background:#eff6ff;border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;">
+          <p style="font-weight:800;margin-bottom:1rem;">🎮 Jaribu Mwenyewe!</p>
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <input id="n1" type="number" min="0" max="20" value="3" style="width:80px;padding:0.6rem;font-size:1.5rem;font-weight:700;text-align:center;border:2px solid #1565c0;border-radius:10px;font-family:inherit;">
+            <span style="font-size:2rem;font-weight:900;color:#1565c0;">+</span>
+            <input id="n2" type="number" min="0" max="20" value="4" style="width:80px;padding:0.6rem;font-size:1.5rem;font-weight:700;text-align:center;border:2px solid #1565c0;border-radius:10px;font-family:inherit;">
+            <span style="font-size:2rem;font-weight:900;color:#1565c0;">=</span>
+            <div id="jibu" style="width:80px;padding:0.6rem;font-size:1.5rem;font-weight:900;text-align:center;background:white;border:2px solid #e5e7eb;border-radius:10px;color:#16a34a;">?</div>
+          </div>
+          <button onclick="hesabuJumlisha()" style="padding:0.7rem 1.5rem;background:#1565c0;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ Hesabu Jibu</button>
+        </div>
+        <div style="background:#f0fdf4;border-radius:12px;padding:1.2rem;">
+          <p style="font-weight:800;margin-bottom:0.8rem;">📋 Mifano:</p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <span style="font-size:1.05rem;font-weight:600;">1 + 1 = <strong style="color:#16a34a;">2</strong></span>
+            <span style="font-size:1.05rem;font-weight:600;">2 + 3 = <strong style="color:#16a34a;">5</strong></span>
+            <span style="font-size:1.05rem;font-weight:600;">4 + 4 = <strong style="color:#16a34a;">8</strong></span>
+            <span style="font-size:1.05rem;font-weight:600;">5 + 5 = <strong style="color:#16a34a;">10</strong></span>
+          </div>
+        </div>
+        <script>
+          function hesabuJumlisha(){
+            const n1=parseInt(document.getElementById('n1').value)||0;
+            const n2=parseInt(document.getElementById('n2').value)||0;
+            const j=document.getElementById('jibu');
+            j.textContent=n1+n2; j.style.borderColor='#16a34a';
+            j.style.background='#f0fdf4'; j.style.transform='scale(1.2)';
+            setTimeout(()=>j.style.transform='scale(1)',300);
+          }
+        <\/script>
+      `
+    }
+  ],
+
+  // ── PRIMARY › DARASA LA 1 › KISWAHILI ───────────────
+  "primary__std1__swahili": [
+    {
+      id: "p1sw1",
+      title: "Herufi za Alfabeti",
+      date: "2024-01-12",
+      type: "text",
+      body: `Alfabeti ya Kiswahili ina herufi 24.
+
+Herufi hizo ni:
+A B C D E F G H I J K L M
+N O P R S T U V W Y Z
+
+Herufi zinagawanywa katika makundi mawili:
+1. Irabu (Vowels)    : A, E, I, O, U
+2. Konsonanti        : Herufi zote nyingine
+
+Mifano ya maneno:
+A - Askari, Andika
+B - Babu, Baba
+C - Chakula, Chura
+D - Dawa, Duka
+E - Elimu, Embe`
+    }
+  ],
+
+  // ── PRIMARY › DARASA LA 3&4 › HESABU ────────────────
+  "primary__std34__math": [
+    {
+      id: "p34m1",
+      title: "Jedwali la Kuzidisha 2",
+      date: "2024-02-01",
+      type: "interactive",
+      body: `
+        <p style="font-size:1rem;line-height:1.8;margin-bottom:1.5rem;">
+          Kuzidisha ni kuongeza nambari sawa mara nyingi. Bonyeza kuziona moja moja!
+        </p>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+          <button onclick="onyeshaJedwali()" style="padding:0.7rem 1.5rem;background:#1565c0;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">▶ Onyesha Jedwali</button>
+          <button onclick="resetJedwali()" style="padding:0.7rem 1.5rem;background:#6b7280;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">🔄 Upya</button>
+        </div>
+        <div id="jedwali-rows" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
+        <script>
+          let jTimer=null, jStep=0;
+          const jData=[[2,1,2],[2,2,4],[2,3,6],[2,4,8],[2,5,10],[2,6,12],[2,7,14],[2,8,16],[2,9,18],[2,10,20]];
+          function onyeshaJedwali(){ resetJedwali(); jStep=0; onyeshaHatua(); }
+          function onyeshaHatua(){
+            if(jStep>=jData.length) return;
+            const [a,b,c]=jData[jStep];
+            const row=document.createElement('div');
+            row.style.cssText='display:flex;align-items:center;gap:1rem;padding:0.8rem 1.2rem;background:#eff6ff;border-radius:10px;animation:popIn 0.3s ease;font-size:1.1rem;font-weight:700;';
+            row.innerHTML=\`<span style="color:#1565c0;min-width:60px;">\${a} × \${b}</span><span>=</span><span style="color:#16a34a;font-size:1.3rem;">\${c}</span>\`;
+            document.getElementById('jedwali-rows').appendChild(row);
+            jStep++; jTimer=setTimeout(onyeshaHatua,600);
+          }
+          function resetJedwali(){ clearTimeout(jTimer); jStep=0; document.getElementById('jedwali-rows').innerHTML=''; }
+        <\/script>
+      `
+    }
+  ],
+
+  // ── PRIMARY › DARASA LA 5,6,7 › SAYANSI ─────────────
+  "primary__std567__science": [
+    {
+      id: "p567sc1",
+      title: "Mfumo wa Jua",
+      date: "2024-03-01",
+      type: "text",
+      body: `Mfumo wa Jua una Jua moja na sayari nane.
+
+Sayari kwa mpangilio kutoka Jua:
+1. Zebaki  (Mercury) — sayari ndogo na karibu na Jua
+2. Zuhura  (Venus)   — sayari ya pili, moto sana
+3. Dunia   (Earth)   — sayari tunayoishi
+4. Mirihi  (Mars)    — sayari nyekundu
+5. Mshtarii(Jupiter) — sayari kubwa kuliko zote
+6. Zohali  (Saturn)  — ina pete zinazoonekana
+7. Urani   (Uranus)  — inazunguka kwa upande
+8. Neptuni (Neptune) — sayari ya mbali kabisa
+
+Ukweli muhimu:
+- Jua ni nyota, si sayari
+- Dunia huzunguka Jua mara moja kwa siku 365
+- Mwezi huzunguka Dunia, si Jua`
+    }
+  ],
+
+  // ── ORDINARY › FORM 1 › HISABATI ────────────────────
+  "ordinary__form1__math": [
+    {
+      id: "o1m1",
+      title: "Nambari za Asili na Nzima",
+      date: "2024-01-20",
+      type: "text",
+      body: `NAMBARI ZA ASILI (Natural Numbers)
+Ni nambari za kuhesabu: 1, 2, 3, 4, 5, ...
+
+NAMBARI NZIMA (Whole Numbers)
+Ni nambari za asili pamoja na sifuri: 0, 1, 2, 3, ...
+
+NAMBARI HASI (Negative Numbers)
+Ni nambari chini ya sifuri: -1, -2, -3, ...
+
+SHERIA ZA NAMBARI HASI:
+(+) × (+) = +   mfano: 3 × 4 = 12
+(-) × (-) = +   mfano: -3 × -4 = 12
+(+) × (-) = -   mfano: 3 × -4 = -12
+(-) × (+) = -   mfano: -3 × 4 = -12`
+    }
+  ],
+
+  // ── ORDINARY › FORM 2 › FIZIKIA ─────────────────────
+  "ordinary__form2__physics": [
+    {
+      id: "o2ph1",
+      title: "Nguvu na Mwendo",
+      date: "2024-02-10",
+      type: "text",
+      body: `NGUVU (FORCE)
+Nguvu ni kitu kinachosababisha mwili kusogea au kusimama.
+Kipimo cha nguvu: Newton (N)
+
+SHERIA ZA NEWTON:
+
+Sheria ya 1 — Inertia:
+Mwili ukiwa mapumziko utabaki mapumziko isipokuwa nguvu ya nje iingiliane nao.
+
+Sheria ya 2:
+F = ma
+F = Nguvu (N), m = Uzito (kg), a = Msogeo (m/s²)
+
+Mfano:
+Gari la 1000 kg linapata msogeo wa 2 m/s²
+F = 1000 × 2 = 2000 N
+
+Sheria ya 3:
+Kwa kila tendo kuna tendo lingine sawa na kinyume chake.`
+    }
+  ],
+
+  // ── ADVANCED › FORM 5 › FIZIKIA ─────────────────────
+  "advanced__form5__physics": [
+    {
+      id: "a5ph1",
+      title: "Mwendo wa Mviringo",
+      date: "2024-04-01",
+      type: "text",
+      body: `MWENDO WA MVIRINGO (Circular Motion)
+
+NGUVU YA KATIKATI (Centripetal Force):
+F = mv²/r
+
+F = Nguvu ya katikati (N)
+m = Mzigo (kg)
+v = Kasi (m/s)
+r = Radius (m)
+
+MUDA WA KUZUNGUKA (Period):
+T = 2πr/v
+
+Mfano wa Tatizo:
+Gari la 800 kg linazunguka kwenye radius ya 50 m kwa kasi ya 20 m/s.
+F = (800 × 20²) / 50
+  = (800 × 400) / 50
+  = 320,000 / 50
+  = 6,400 N`
+    }
+  ],
+
+  // ── ADVANCED › FORM 6 › KEMIA ────────────────────────
+  "advanced__form6__chem": [
+    {
+      id: "a6ch1",
+      title: "Alkeni — Kemikali ya Kikaboni",
+      date: "2024-04-10",
+      type: "text",
+      body: `ALKENI (ALKENES)
+Alkeni ni hydrocarboni zenye bendi moja ya kiunzi (C=C).
+Formula ya jumla: CₙH₂ₙ
+
+MFULULIZO:
+Ethene  → C₂H₄
+Propene → C₃H₆
+Butene  → C₄H₈
+
+MMENYUKO MUHIMU:
+a) Hydrogenation:
+   C₂H₄ + H₂ → C₂H₆
+
+b) Halogenation:
+   C₂H₄ + Br₂ → C₂H₄Br₂
+   (Bromini ya kahawia hubadilika — mtihani wa alkeni)
+
+c) Hydration:
+   C₂H₄ + H₂O → C₂H₅OH (ethanol)`
+    }
+  ]
+
+};
+
+// ════════════════════════════════════════════
+// CONFIG — USIBADILISHE HAPA CHINI
+// ════════════════════════════════════════════
+const CLASSES = {
+  primary: [
+    { id: 'std1',   label: 'Darasa la 1',        icon: '1️⃣', sub: 'Standard One' },
+    { id: 'std2',   label: 'Darasa la 2',        icon: '2️⃣', sub: 'Standard Two' },
+    { id: 'std34',  label: 'Darasa la 3 & 4',    icon: '3️⃣', sub: 'Standard Three & Four' },
+    { id: 'std567', label: 'Darasa la 5, 6 & 7', icon: '🎯', sub: 'Standard Five, Six & Seven' },
+  ],
+  ordinary: [
+    { id: 'form1', label: 'Form One',   icon: '📗', sub: 'O-Level Year 1' },
+    { id: 'form2', label: 'Form Two',   icon: '📘', sub: 'O-Level Year 2' },
+    { id: 'form3', label: 'Form Three', icon: '📙', sub: 'O-Level Year 3' },
+    { id: 'form4', label: 'Form Four',  icon: '🏅', sub: 'O-Level Year 4 — NECTA' },
+  ],
+  advanced: [
+    { id: 'form5', label: 'Form Five', icon: '🔭', sub: 'A-Level Year 1' },
+    { id: 'form6', label: 'Form Six',  icon: '🎓', sub: 'A-Level Year 2 — ACSE' },
+  ]
+};
+const SUBJECTS = {
+  primary: [
+    { id: 'math',    label: 'Hesabu',     icon: '➕' },
+    { id: 'english', label: 'Kiingereza', icon: '🔤' },
+    { id: 'swahili', label: 'Kiswahili',  icon: '📝' },
+    { id: 'science', label: 'Sayansi',    icon: '🔬' },
+    { id: 'social',  label: 'Maarifa',    icon: '🌍' },
+    { id: 'ict',     label: 'TEHAMA',     icon: '💻' },
+  ],
+  ordinary: [
+    { id: 'math',    label: 'Hisabati',   icon: '📐' },
+    { id: 'physics', label: 'Fizikia',    icon: '⚡' },
+    { id: 'chem',    label: 'Kemia',      icon: '🧪' },
+    { id: 'bio',     label: 'Baiolojia',  icon: '🧬' },
+    { id: 'geo',     label: 'Jiografia',  icon: '🗺️' },
+    { id: 'hist',    label: 'Historia',   icon: '📜' },
+    { id: 'english', label: 'Kiingereza', icon: '🔤' },
+    { id: 'swahili', label: 'Kiswahili',  icon: '📝' },
+    { id: 'civics',  label: 'Uraia',      icon: '⚖️' },
+    { id: 'ict',     label: 'TEHAMA',     icon: '💻' },
+  ],
+  advanced: [
+    { id: 'admath',  label: 'Hisabati',   icon: '📐' },
+    { id: 'physics', label: 'Fizikia',    icon: '⚡' },
+    { id: 'chem',    label: 'Kemia',      icon: '🧪' },
+    { id: 'bio',     label: 'Baiolojia',  icon: '🧬' },
+    { id: 'geo',     label: 'Jiografia',  icon: '🗺️' },
+    { id: 'hist',    label: 'Historia',   icon: '📜' },
+    { id: 'english', label: 'Kiingereza', icon: '🔤' },
+    { id: 'econ',    label: 'Uchumi',     icon: '📈' },
+    { id: 'account', label: 'Uhasibu',    icon: '🧾' },
+    { id: 'bt',      label: 'Biashara',   icon: '🏢' },
+  ]
+};
+const LEVEL_LABELS = { primary: 'Primary', ordinary: 'O-Level', advanced: 'A-Level' };
+const LEVEL_COLORS = { primary: '#1565c0', ordinary: '#2e7d32', advanced: '#6a1b9a' };
+
+let state = { level: null, classId: null, subjectId: null, activeNoteId: null };
+function escHtml(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); window.scrollTo(0,0); }
+function updateBreadcrumb(){
+  const bc=document.getElementById('breadcrumb');
+  let parts=[`<span class="crumb" onclick="goHome()">🏠 Nyumbani</span>`];
+  if(state.level){ parts.push(`<span class="sep">›</span><span class="crumb" onclick="goToClasses('${state.level}')">${LEVEL_LABELS[state.level]}</span>`); }
+  if(state.classId){ const cls=CLASSES[state.level].find(c=>c.id===state.classId); parts.push(`<span class="sep">›</span><span class="crumb" onclick="goToSubjects('${state.classId}')">${cls.label}</span>`); }
+  if(state.subjectId){ const sub=SUBJECTS[state.level].find(s=>s.id===state.subjectId); parts.push(`<span class="sep">›</span><span class="crumb">${sub.label}</span>`); }
+  bc.innerHTML=parts.join('');
+}
+function goHome(){ state={level:null,classId:null,subjectId:null,activeNoteId:null}; updateBreadcrumb(); showPage('home'); }
+function goToClasses(level){
+  state.level=level; state.classId=null; state.subjectId=null;
+  const color=LEVEL_COLORS[level];
+  const badge=document.getElementById('levelBadge');
+  badge.textContent=LEVEL_LABELS[level]; badge.className=`badge ${level}`;
+  document.getElementById('classesTitle').textContent='Chagua Darasa / Kidato';
+  const grid=document.getElementById('classesGrid'); grid.innerHTML='';
+  CLASSES[level].forEach(cls=>{
+    const card=document.createElement('div'); card.className='class-card';
+    card.style.setProperty('--active',color);
+    card.innerHTML=`<div class="class-icon">${cls.icon}</div><h3>${cls.label}</h3><p>${cls.sub}</p>`;
+    card.onclick=()=>goToSubjects(cls.id); grid.appendChild(card);
+  });
+  updateBreadcrumb(); showPage('classes');
+}
+function goToSubjects(classId){
+  state.classId=classId; state.subjectId=null;
+  const cls=CLASSES[state.level].find(c=>c.id===classId);
+  const color=LEVEL_COLORS[state.level];
+  const badge=document.getElementById('levelBadge2');
+  badge.textContent=LEVEL_LABELS[state.level]; badge.className=`badge ${state.level}`;
+  document.getElementById('subjectsTitle').textContent=`${cls.label} — Chagua Somo`;
+  const grid=document.getElementById('subjectsGrid'); grid.innerHTML='';
+  SUBJECTS[state.level].forEach(sub=>{
+    const card=document.createElement('div'); card.className='subject-card';
+    card.style.cssText=`--active:${color}`;
+    card.innerHTML=`<div class="subj-icon">${sub.icon}</div><div><h3>${sub.label}</h3><p>Bonyeza kusoma notes</p></div>`;
+    card.onclick=()=>goToNotes(sub.id); grid.appendChild(card);
+  });
+  updateBreadcrumb(); showPage('subjects');
+}
+function goToNotes(subjectId){
+  state.subjectId=subjectId; state.activeNoteId=null;
+  const sub=SUBJECTS[state.level].find(s=>s.id===subjectId);
+  const cls=CLASSES[state.level].find(c=>c.id===state.classId);
+  const color=LEVEL_COLORS[state.level];
+  const badge=document.getElementById('levelBadge3');
+  badge.textContent=LEVEL_LABELS[state.level]; badge.className=`badge ${state.level}`;
+  document.getElementById('notesTitle').textContent=`${cls.label} › ${sub.icon} ${sub.label}`;
+  renderSidebar(); resetReader(); updateBreadcrumb(); showPage('notes');
+}
+function getNoteKey(){ return `${state.level}__${state.classId}__${state.subjectId}`; }
+function getCurrentNotes(){ return NOTES_DATA[getNoteKey()]||[]; }
+function renderSidebar(){
+  const notes=getCurrentNotes();
+  const list=document.getElementById('notesList');
+  const empty=document.getElementById('notesEmpty');
+  list.innerHTML='';
+  if(notes.length===0){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  notes.forEach(n=>{
+    const item=document.createElement('div');
+    item.className='note-item'+(n.id===state.activeNoteId?' active':'');
+    item.innerHTML=`<h4>${escHtml(n.title)}</h4><p>${n.date}</p>`;
+    item.onclick=()=>openNote(n.id); list.appendChild(item);
+  });
+}
+function resetReader(){
+  document.getElementById('noteReader').innerHTML=`<div class="reader-placeholder"><div class="big-icon">📖</div><p>Chagua note kushoto kusoma</p></div>`;
+}
+function openNote(id){
+  state.activeNoteId=id;
+  const note=getCurrentNotes().find(n=>n.id===id);
+  if(!note) return;
+  renderSidebar();
+  const bodyContent = note.type==='interactive'
+    ? note.body
+    : `<div class="note-reading-body">${escHtml(note.body)}</div>`;
+  document.getElementById('noteReader').innerHTML=`
+    <div class="note-reading-header">
+      <h2 class="note-reading-title">${escHtml(note.title)}</h2>
+      <span class="note-date">${note.date}</span>
+    </div>
+    ${bodyContent}`;
+  if(note.type==='interactive'){
+    document.getElementById('noteReader').querySelectorAll('script').forEach(old=>{
+      const s=document.createElement('script');
+      s.textContent=old.textContent;
+      old.parentNode.replaceChild(s,old);
+    });
+  }
+}
+</script>
+</body>
+</html>

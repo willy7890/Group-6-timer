@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Study Pro-Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary-color: #1565c0;
+    --ordinary-color: #2e7d32;
+    --advanced-color: #6a1b9a;
+    --bg: #f4f6f9;
+    --white: #ffffff;
+    --dark: #1e293b;
+    --muted: #64748b;
+    --radius: 16px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    --active: #1565c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+  .topbar {
+    background: var(--dark);
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .topbar .logo { font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; }
+  .topbar .logo span { color: #facc15; }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.6);
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+  .breadcrumb .crumb { cursor: pointer; color: rgba(255,255,255,0.85); transition: color 0.2s; }
+  .breadcrumb .crumb:hover { color: #facc15; }
+  .breadcrumb .sep { opacity: 0.4; }
+  .home-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  .home-btn:hover { background: rgba(255,255,255,0.1); }
+  .page { display: none; padding: 2.5rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; animation: fadeUp 0.35s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .page-title { text-align: center; margin-bottom: 2.5rem; }
+  .page-title h1 { font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem; }
+  .page-title p { color: var(--muted); font-size: 1rem; }
+  .levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .level-card {
+    border-radius: var(--radius);
+    padding: 2.5rem 2rem;
+    cursor: pointer;
+    transition: transform 0.25s, box-shadow 0.25s;
+    position: relative;
+    overflow: hidden;
+    color: white;
+  }
+  .level-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
+  .level-card.primary  { background: linear-gradient(135deg, #1565c0, #1976d2); }
+  .level-card.ordinary { background: linear-gradient(135deg, #2e7d32, #388e3c); }
+  .level-card.advanced { background: linear-gradient(135deg, #6a1b9a, #7b1fa2); }
+  .level-card .icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+  .level-card h2 { font-size: 1.6rem; font-weight: 900; margin-bottom: 0.4rem; }
+  .level-card p  { font-size: 0.88rem; opacity: 0.85; line-height: 1.5; }
+  .classes-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+  .classes-header .badge { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 700; color: white; }
+  .badge.primary  { background: #1565c0; }
+  .badge.ordinary { background: #2e7d32; }
+  .badge.advanced { background: #6a1b9a; }
+  .classes-header h2 { font-size: 1.5rem; font-weight: 800; }
+  .classes-grid, .subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.2rem;
+  }
+  .class-card, .subject-card {
+    background: white; border-radius: var(--radius); padding: 1.8rem 1.5rem;
+    cursor: pointer; transition: all 0.22s; border: 2px solid transparent;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .class-card:hover, .subject-card:hover { border-color: var(--active); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+  .class-card .class-icon, .subject-card .subj-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+  .class-card h3, .subject-card h3 { font-size: 1.1rem; font-weight: 800; }
+  .notes-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; align-items: start; }
+  .notes-sidebar {
+    background: white; border-radius: var(--radius); padding: 1.2rem;
+    box-shadow: var(--shadow); position: sticky; top: 80px;
+  }
+  .notes-sidebar h3 {
+    font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid #e2e8f0;
+  }
+  .note-item { padding: 0.9rem 1rem; border-radius: 10px; cursor: pointer; transition: all 0.2s; margin-bottom: 0.4rem; border: 2px solid transparent; }
+  .note-item:hover { background: #f1f5f9; }
+  .note-item.active { background: #eff6ff; border-color: #1565c0; }
+  .note-item h4 { font-size: 0.88rem; font-weight: 700; }
+  .note-reader { background: white; border-radius: var(--radius); padding: 2.5rem; box-shadow: var(--shadow); min-height: 500px; }
+  .reader-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--muted); text-align: center; gap: 1rem; }
+  .reader-placeholder .big-icon { font-size: 4rem; opacity: 0.3; }
+  .note-reader {background-color: #fefce8; border-radius: 24px;padding:2.5rem; box-shadow: 0 10px 25px rgba(234,179,8,0.15);min-height: 500px; border: 4px dashed#fef08a;}
+  .note-reading-header { border-bottom: 2px solid #f1f5f9; padding-bottom: 1.2rem; margin-bottom: 2rem; }
+  .note-reading-title { font-family: 'Andika', serif; font-size: 2.5rem; font-weight: 700; line-height: 1.3; }
+  .note-reading-body { font-size: 1.5rem; line-height: 3; color: #1e40af; white-space: pre-wrap; font-family: 'Andika', 'Comic Neue', sans-serif; font-weight: 700; padding-bottom: 0.5rem; }
+  .empty-message { text-align: center; color: var(--muted); padding: 2rem; font-size: 0.9rem; }
+  @media (max-width: 720px) {
+    .notes-layout { grid-template-columns: 1fr; }
+    .notes-sidebar { position: static; }
+    .page { padding: 1.5rem 1rem; }
+    .levels-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><b style="color:aqua;">Smart Study</b> <i>pro</i> <span>Notes</span></div>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <button class="home-btn" onclick="goHome()">🏠 Home</button>
+</div>
+
+<div class="page active" id="page-home">
+  <div class="page-title">
+    <h1>📚 ALL LEVEL NOTES</h1>
+    <p>Choose an education level to start reading</p>
+  </div>
+  <div class="levels-grid">
+    <div class="level-card primary" onclick="goToClasses('primary')">
+      <span class="icon">🏫</span>
+      <h2 style="color: rgb(14, 7, 7);">Primary Level</h2>
+      <p>Standard 1 - 7 (Basic Education)</p>
+    </div>
+    <div class="level-card ordinary" onclick="goToClasses('ordinary')">
+      <span class="icon">🎓</span>
+      <h2 style="color: black;">Ordinary Level</h2>
+      <p>Form 1 - 4 (O-Level)</p>
+    </div>
+    <div class="level-card advanced" onclick="goToClasses('advanced')">
+      <span class="icon">🔬</span>
+      <h2 style="color:black;">Advanced Level</h2>
+      <p>Form 5 - 6  (A-Level)</p>
+    </div>
+    
+  </div>
+</div>
+
+<div class="page" id="page-classes">
+  <div class="classes-header">
+    <span class="badge" id="levelBadge"></span>
+    <h2 id="classesTitle"></h2>
+  </div>
+  <div class="classes-grid" id="classesGrid"></div>
+</div>
+
+<div class="page" id="page-subjects">
+  <div class="classes-header">
+    <span class="badge" id="levelBadge2"></span>
+    <h2 id="subjectsTitle"></h2>
+  </div>
+  <div class="subjects-grid" id="subjectsGrid"></div>
+</div>
+
+<div class="page" id="page-notes">
+  <div class="classes-header">
+    <span class="badge" id="levelBadge3"></span>
+    <h2 id="notesTitle"></h2>
+  </div>
+  <div class="notes-layout">
+    <div class="notes-sidebar">
+      <h3>Mada Zilizopo</h3>
+      <div id="notesList"></div>
+    </div>
+    <div class="note-reader" id="noteReader">
+      <div class="reader-placeholder">
+        <div class="big-icon">📖</div>
+        <p>Chagua mada upande wa kushoto ili kuanza kusoma</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+//  Book store (DATABASE)
+// ==========================================
+const MY_DATABASE = {
+  // 1.P level notes
+  "primary__std1__math": [
+    {title: "sura ya 1:Kuhesabu Namba 0 -10",body:"Tujifunze kuhasabu Namba 0 hadi 10:\n0   1   2   3   4   5   6   7   8   9   10\n0   0   0   0   0   0   0   0   0   0   0\n1   1   1   1   1   1   1   1   1   1   1\n2   2   2   2   2   2   2   2   2   2   2\n3   3  3   3   3   3   3   3   3   3   3\n4   4   4   4  4   4   4   4   4   4   4\n5   5   5   5   5   5   5   5   5   5   5\n6   6   6   6   6   6   6   6   6   6   6\n7   7   7   7   7   7   7   7   7   7   7\n8   8   8   8   8   8   8   8   8   8   8\n9   9   9   9   9   9   9   9   9   9   9\n10   10   10   10   10   10   10    10\n3   5   7   9   2   0   1   10   4   8   6\n7   5   2   0   1   3   6   10   8   9   4\n5   8   7   2   4   3   0   9   10   1   6\n10   9   8   7   6   5   4   3   2   1   0\n6  7   8   9   0   5   4   10   3   2   1\n0   9   8   1   2   3   6   7   4   5   10"},
+    { title: "sura ya 2: Kuhesabu idadi ya vitu", body: "☞Karibu tujifunza kuhusu kuhesabu idadi ya vitu.\n☞Namba ni alama tunayotumia kuwakilisha kiasi au nafasi.\n☞Hesabu ni mchakato wa kufanya mahesabu kwa kutumia namba.\n✦Zoezi:\n➢Hesabu idadi ya vitu vifuatavyo?\n1.🐝   🐝   🐝\n   🐝   🐝\n\n2. 🐓   🐓   🐓\n   🐓   🐓   🐓\n\n3. 🐆   🐆   🐆   🐆   🐆\n   🐆   🐆   🐆   🐆   🐆\n\n4. 🐇   🐇\n\n5. ⚽️   ⚽️   ⚽️   ⚽️\n   ⚽️   ⚽️   ⚽️   ⚽️\n\n6.🚌   🚌   🚌\n\n7.🛖   🛖   🛖   🛖\n   🛖   🛖   🛖\n\n8.🎠   🎠   🎠\n   🎠   🎠   🎠\n   🎠   🎠   🎠\n\n9.🛞   🛞\n   🛞\n\n10.💻   💻\n\n11.📸   📸   📸\n     📸   📸   📸\n     📸   📸   📸\n\n12.📡   📡   📡   📡   📡\n     📡   📡   📡   📡   📡\n\n13.🇹🇿    🇹🇿\n\n14.♣︎   ♣︎   ♣︎\n     ♣︎   ♣︎\n\n15.📕   📕\n     📕   📕\n\n16.🔒   🔒   🔒   🔒\n     🔒   🔒   🔒\n\n17.✏️   ✏️   ✏️   ✏️   ✏️\n     ✏️   ✏️   ✏️   ✏️   ✏️\n\n18.📍\n\n19.🎁   🎁   🎁   🎁\n     🎁   🎁   🎁\n\n20.📌   📌\n     📌\n\n21.🪥\n\n22.🔦   🔦\n     🔦   🔦\n\n23.💡   💡   💡   💡\n    💡   💡\n\n24.🖲   🖲   🖲\n     🖲   🖲   🖲\n\n25.📱   📱   📱   📱   📱\n     📱   📱   📱   📱   📱\n\n26.🚉   🚉   🚉\n\n27.🛳   🛳\n\n28.🛺   🛺\n     🛺   🛺\n\n29.🎸\n\n30.🎲   🎲   🎲   🎲\n     🎲   🎲   🎲   🎲\n\n31.🔧\n\n32.🎂   🎂   🎂   🎂\n     🎂   🎂   🎂   🎂  " },
+    { title: "sura ya 3: Kuhesabu Namba 0-10", body: "☞Tutajifunza kuhesabu namba kuanzia 0 hadi 10 kwa maneno.\n0 - sifuri\n1 - Moja\n2 - Mbili\n3 - Tatu\n4 - Nne\n5 - Tano\n6 - Sita\n7 - Saba\n8 - Nane\n9 - Tisa\n10 - Kumi.\n\n✦Zoezi:\n➢Hesabu vidole vya mkono wako wa kulia.\n" },
+    { title: "sura ya 4: Kujumlisha Namba", body: "☞Kujumlisha ni kuweka vitu pamoja.\n➢Mfano:\n1. 1 + 1 = 2\n    🪣   +   🪣  =  🪣 🪣\n2. 2 + 3 = 5\n    🪣 🪣   +   🪣 🪣 🪣   =  🪣🪣🪣🪣🪣\n3. 3 + 3 = 6\n    🪣 🪣 🪣   +   🪣 🪣 🪣   =   🪣 🪣 🪣 🪣 🪣 🪣\n4. 2 + 1 = 3\n    🧷 🧷  +   🧷   =   🧷 🧷 🧷\n5. 2 + 4 = 6\n    🌹 🌹   +   🌹 🌹 🌹 🌹   =   🌹 🌹 🌹 🌹 🌹 🌹\n6. 3 + 1 = 4\n7. 0 + 9 = 9\n8. 5 + 3 = 8\n9. 3 + 1 = 4\n10. 6 + 1 = 7\n11. 8 + 1 = 9\n12. 6 + 2 = 8\n13. 2 + 5 = 7\n14. 7 + 3 = 10\n15. 4 + 5 = 9\n16. 5 + 2 = 7\n17. 2 + 5 = 7\n18. 8 + 0 = 8\n19. 0 + 4 = 4\n20. 5 + 5 = 10\n21. 1 + 1 = 2\n22. 4 + 4 = 8\n23. 3 + 3 = 6\n" },
+    {title: "sura ya 5: Kutoa Namba", body: "☞Kutoa ni kutenganisha vitu vilivyo pamoja.\n➢KUTOA: Namba kubwa ndo inaweza kutoa namba ndogo\n➢Mfano\n1. 2 - 1 = 1\n    🔔🔔   -   🔔🔕   =   🔔\n2. 3 - 1 = 2\n    🔔🔔🔔   -   🔔🔔🔕   =   🔔🔔\n3. 4 - 2 = 2\n   🔈 🔈 🔈 🔈   -   🔈 🔈 🔇 🔇   =   🔈 🔈\n4. 5 - 3 = 2\n   🔈 🔈 🔈 🔈 🔈   -   🔈 🔈 🔇 🔇 🔇   =   🔈 🔈\n5. 5 - 4 = 1\n    🔈 🔈 🔈 🔈 🔈   -   🔈 🔇 🔇 🔇 🔇   =   🔈\n6. 7 - 5 = 2\n7. 7 - 3 = 4\n8. 6 - 4 = 2\n9. 8 - 5 = 1\n10. 7 -2 = 5\n11. 8 - 4 = 4\n12. 6 - 3 = 3\n13. 9 - 5 = 4\n14. 10 - 5 = 5\n15. 5 - 5 = 0\n16. 6 - 6 = 0\n17. 3 - 3 = 0\n18. 4 - 1 = 3\n19. 6 - 5 = 1\n20. 7 - 2 = 5\n21. 4 - 0 = 4\n22. 2 - 0 = 2\n23. 5 - 1 = 4\n24. 9 - 1 = 8\n25. 10 - 6 = 4\nKumbuka Namba ndogo kutoa namba kubwa haiwezekani\nMfano:\n7 - 9 = Haiwezekani\n1 - 2 = Haiwezekani\n3 - 5 = Haiwezekani"},
+    {
+      id: "p1m1",
+      title: "sura ya 6: Kuhesabu namba kwa kuangalia",
+      type: "interactive",
+      body: `
+        <p style="font-size:1rem; line-height:0.8; margin-bottom:0.02rem;">Bonyeza kitufe hapa chini kuona namba moja moja!</p>
+        <div style="display:flex;gap:0.008rem;flex-wrap:wrap;margin-bottom:0.05rem;">\n
+          <button id="hesabu-start" style="padding:0.7rem 1.5rem;background:#1565c0;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">▶ Anza Kuhesabu</button>\n
+          <button id="hesabu-stop" style="padding:0.7rem 1.5rem;background:#dc2626;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">⏹ Simama</button>
+          <button id="hesabu-reset" style="padding:0.7rem 1.5rem;background:#6b7280;color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;">🔄 Anza Upya</button>
+        </div>
+        <div id="hesabu-display" style="min-height:30px;display:flex;align-items:center;justify-content:center;font-size:4.2rem;font-weight:900;color:#1565c0;background:#eff6ff;border-radius:12px;margin-bottom:0.4rem;transition:all 180ms;letter-spacing:-1px;">—</div>
+        <div id="hesabu-maneno" style="text-align:center;font-size:1.15rem;font-weight:700;color:#374151;margin-bottom:0.4rem;min-height:1.6rem;"></div>
+        <div id="hesabu-dots" style="display:flex;gap:0.08rem;flex-wrap:wrap;justify-content:center;margin-bottom:0.4rem;"></div>
+        <div style="background:#f3f4f6;border-radius:10px;padding:0.6rem;">
+          <p style="font-weight:800;margin-bottom:0.4rem;">📋 Jedwali la Nambari:</p>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.25rem;">
+            ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100].map(n => `<div id="cell-${n}" style="padding:0.35rem;text-align:center;border-radius:6px;background:white;border:2px solid #e5e7eb;font-weight:700;font-size:0.85rem;transition:all 0.18s;">${n}</div>`).join('')}
+          </div>
+        </div>
+      `
+    }
+  ],
+  "primary__std1__swahili": [
+    {title: "Sura ya 1:Kusoma Irabu", body: "Kusoma Irabu za msingi:\n\na   e   i   o   u\na   a   a   a   a\ne   e    e    e    e\ni    i    i    i    i\no   o   o   o   o\nu   u   u   u   u\ne   i   o   u   a\ni   o   u   a   e\no   u   a   e   i\nu   a   e   i   o\no   a   i   e   u   a\n\nKuunganisha Irabu.\na  +  u  =  au\nu  +  a  =  ua\no  +  a  =  oa\ni  +  o  =  io\no  +  i  =  oi\na  +  a  =  aa\na  +  e  =  ae\ni  +  o  =  io\n\nKusoma maneno kwa sauti\nua   au   io   oi\nai   ae   aa   ao   io\nea   ei   eo   eu   ee\noi   ia   ie   iu   ii\naaa   eio   oue   ioa   eei\nieo   aaa   oua   uuu   aei\n"},
+    { title: "sura ya 2: Silabi za herufi", body: "Kusoma silabi za msingi:\n\nba   be   bi   bo   bu\nda   de   di   do   du\nfa   fe   fi   fo   fu\nga   ge   gi   go   gu\nha   he   hi   ho   hu\nja   je   ji   jo   ju\nka   ke   ki   ko   ku\nla   le   li   lo   lu\nma   me   mi   mo   mu\nna   ne   ni   no   nu\npa   pe   pi   po   pu\nra   re   ri   ro   ru\nsa   se   si   so   su\nta   te   ti   to   tu\nva   ve   vi   vo   vu\nwa   we   wi   wo   wu\nya   ye   yi   yo   yu\nza   ze   zi   zo   zu\n"},
+    {title: "sura ya 3: Kusoma kwa Sauti Herufi 'b'",body:"ba   be   bi   bo   bu\nbe   bi   bo   bu   ba\nbi   bo   bu   ba   be\nbo   bu   ba   be   bi\nbu   ba   be   bi   bo\nbi   be   bu   ba   bo\n\nKuunganisha sirabi (b):\nba  +  ba  =  baba\nbe  +  ba  =  beba\nbi  +  bo  =  bibo\nbu  +  bu  =  bubu\nbi  +  bi  =  bibi\n\nKusoma kwa sauti\nbaba   beba   bibi   bubu   babu\nbio   bao   bua   bei   boa\n"},
+    {title: "sura ya 4: Kusoma kwa Sauti Herufi 'd'",body:"da   de   di   do   du\nde   di   do   du   da\ndi   do   du   da   de\ndo   du   da   de   di\ndu   da   de   di   do\ndo   da   du   de   di\n\nKuunganisha sirabi (d):\nda  +  da  =  dada\ndu  +  du  =  dudu\nde  +   o  =  deo\nde   +  be  =  debe\ndu   +  a  =  dua\n\nKusoma kwa sauti\ndada   debe   dodo   dua   dubai\ndudu   deo   dua   dubu  dunia\n"},
+    {title: "sura ya 5: Kusoma kwa sauti Herufi 'f'",body:"fa   fe   fi   fo   fu\nfe   fi   fo   fu   fa\nfi   fo   fu   fa   fe\nfo   fu   fa   fa   fi\nfu   fa   fe   fi   fo\nfo   fa   fu   fe   fi\n\nkusoma kwa sauti:\nfua    fao   fabi    faida"},
+    {title: "sura ya 6: Kusoma kwa sauti Herufi 'g'",body:"ga   ge   gi   go   gu\nge   gi   go   gu   ga\ngi   go   gu   ga   ge\ngo   gu   ga   ge   gi\ngu   ga   ge   gi   go\ngi   ge   gu   ga   go\n\nKusoma kwa sauti:\ngogo   goba   gudi   goigoi   gabu"},
+    {title: "sura ya 7: kusoma kwa sauti Herufi 'h'",body:"ha   he   hi   ho   hu\nhe   hi   ho   hu   ha\nhi   ho   hu   ha   he\nho   hu   ha   he   hi\nhu   ha   he   hi   ho\nhi   he   hu   ha   ho\n\nKusoma kwa sauti:\nhuo    hoi    haha   hodi   hao"},
+    {title: "sura ya 8: kusoma kwa sauti Herufi 'j",body:"ja    je   ji   jo   ju\nje   ji   jo   ju   ja\nji   jo   ju   ja   je\njo   ju   ja   je   ji\nju   ja   je   ji   jo\nji   je   ju   ja   jo\n\nKusoma kwa sauti:\njua    juba   jani   juni   jenifa"},
+    {title: "sura ya 9: Kusoma kwa sauti Herufi 'k'",body:"ka   ke   ki   ko   ku\nke   ki   ko   ku   ka\nki   ko   ku   ka   ke\nko   ku   ka   ke   ki\nku   ka   ke   ki   ko\nki   ke   ku   ka   ko\n\nKusoma kwa sauti:\nkaka   kuku   keki   kiko   kibo\n"},
+    {title: "sura ya 10: Kusoma kwa sauti Herufi 'l'",body:"la   le   li   lo   lu\nle   li   lo   lu  la\nli   lo   lu   la   le\nlo   lu   la   le   li\nlu   la   le   li   lo\nli   le   lu   la   lo\n\nKusoma kwa sauti:\nlala   lia   leki \n"},
+    {title: "sura ya 11: kusoma kwa sauti Herufi 'm'",body:"ma   me   mi   mo   mu\nme   mi   mo   mu   ma\nmi   mo   mu   ma   me\nmo   mu   ma   me   mi\nmu   ma   me   mi   mo\nmi   me   ma   mu   mo\n\nKusoma kwa sauti:\nmama   mimi   mia   moja   mea\nmiba   mida   mamoja   makumi   mamia"},
+    {title: "sura ya 12: kusoma kwa sauti Herufi 'n'",body:"na   ne   ni   no   nu\nne   ni   no   nu   na\nni   no   nu   na   ne\nno   nu   na   ne   ni\nnu   na   ne   ni   no\nni   ne   nu   na   no\n\nKusoma kwa sauti:\nnani   neno   naina "},
+    {title: "sura ya 13: kusoma kwa sauti herufi 'p'",body:"pa   pe   pi   po   pu\npe   pi   po   pu   pa\npi   po   pu   pa   pe\npo   pu   pa   pe   pi\npu   pa   pe   pi   po\npi   pe   pu   pa   po\n\nKusoma kwa sauti:\npapa   pua   papai   pepa   pania\n"},
+    {title: "sura ya 14: Kusoma kwa sauti herufi 'r'",body:"ra   re   ri   ro   ru\nre   ri   ro   ru   ra\nri   ro   ru   ra   re\nro   ru   ra   re   ri\nru   ra   re   ri   ro\nri   ra   re   ru   ro\n\nKusoma kwa sauti:\nreli   rula   rami "},
+    {title: "sura ya 15: Kusoma kwa sauti herufi 's'",body:"sa   se   si   so   su\nse   si   so   su   sa\nsi   so   su   sa   se\nso   su   sa   se   si\nsu   sa   se   si   so\nso   sa   se   su   si\n\nKusoma kwa sauti:\nsasa   sepa   selikari   sinia   sahani\nsababu   sega   samaki   sali   sala\nsamehe   semea   salimia"},
+    {title: "sura ya 16: Kusoma kwa sauti herufi 't'",body:"ta   te   ti   to   tu\nte   ti   to   tu   ta\nti   to   tu   ta   te\nto   tu   ta   te   ti\ntu   ta   te   ti   to\nto   ta   te   tu   ti\n\nKusoma kwa sauti:\ntaa  taifa   tamaa   tuta   tamani\ntaga   tai   taarifa   tabia   tiba\n"},
+    {title: "sura ya 17: kusoma kwa sauti herufi 'v'",body:"va   ve   vi   vo   vu\nve   vi   vo   vu   va\nvi   vo   vu   va   ve\nvo   vu   va   ve   vi\nvu   va   ve   vi   vo\nvu   va   vo   ve   vi\n\nKusoma kwa sauti:\nvaa   vuta   vua   vumilia   vutika\nvamia"},
+    {title: "sura ya 18: Kusoma kwa sauti herufi 'w'",body:"wa   we   we   wo   wu\nwe   wi   wo   wu   wa\nwi   wo   wu   wa   we\nwo   wu   wa   we   wi\nwu   wa   we   wi   wo\nwu   wa   wo   we   wi\n\nKusoma kwa sauti:\nwali   wili   weka   wote   watano\nwino wika"},
+    {title: "sura ya 19: kusoma kwa sauti herufi 'y'",body:"ya   ye   yi   yo   yu\nye   yi   yo   yu   ya\nyi   yo   yu   ya   ye\nyo   yu   ya   ye   yi\nyu   ya   ye   yi   yo\nyo   ya   yi   ye   yu\n\nKusoma kwa sauti:\nyeye   yai   yahaya   yeboyebo"},
+    {title: "Sura ya 19: kusoma kwa sauti Herufi 'z'",body:"za   ze   zi   zo   zu\nze   zi   zo   zu   za\nzi   zo   zu   za   ze\nzo   zu   za   ze   zi\nzu   za   ze   zi   zo\nzo   za   zu   ze   zi\n\nKusoma kwa sauti:\nzizi   zeze   zubaa   zagaa   zote\nzuga   zima   zama   zuku"},
+    {title: "sura ya 20:ZOEZI\nsoma silabi zifuatazo kwa usahihi:",body:"ota   ugali  oza   oga   ana   ogopa\nbati   bata   bamia   bahati   bajaji   bakuli\nduara   dodoki   dodoma   deni   dunia   dafu   kuka\nfagia   fagio   fani   fanana   faini\ngiza   gota   gari   guta   gunia   gitaa\nhaji   hewa   halima   huyo   hao\njabali   junia   jeki   juta   jutia   joka\nkarai   katani   kizibo   kata   kaburi   koroboi   kabati   kipara\nlima   lete   lipa\nmita   meza   mafuta\nnanasi   nata   nenepa\npera   pepeta   pesa\nsaza   sawa   soya   sawia   tazama   tatizo\nvazi   viazi\nwizi   waza   wazazi\n"},
+
+  ],
+  
+  // 2. NOTES ZA ORDINARY LEVEL (O-LEVEL)
+  "ordinary__form1__physics": [
+    { title: "Introduction to Physics", body: "What is Physics?\nPhysics is the branch of science which deals with the study of matter in relation to energy.\n\nBranches of Physics:\n1. Mechanics\n2. Electricity\n3. Magnetism\n4. Thermodynamics" }
+  ],
+
+  // 3. NOTES ZA ADVANCED LEVEL (A-LEVEL)
+  "advanced__form5__physics": [
+    { title: "Mechanics - Linear Motion", body: "Equations of uniformly accelerated motion:\n\n1. v = u + at\n2. s = ut + 0.5at^2\n3. v^2 = u^2 + 2as" }
+  ]
+};
+
+// Vigezo vya kimuundo vya website
+const CLASSES = {
+  primary: [
+    { id: 'std1',   label: 'Darasa la 1',       icon: '1️⃣' },
+    { id: 'std2',   label: 'Darasa la 2',       icon: '2️⃣' },
+    { id: 'std34',  label: 'Darasa la 3 & 4',   icon: '3️⃣' },
+    { id: 'std567', label: 'Darasa la 5, 6 & 7',icon: '🎯' },
+  ],
+  ordinary: [
+    { id: 'form1', label: 'Form One',   icon: '📗' },
+    { id: 'form2', label: 'Form Two',   icon: '📘' },
+    { id: 'form3', label: 'Form Three', icon: '📙' },
+    { id: 'form4', label: 'Form Four',  icon: '🏅' },
+  ],
+  advanced: [
+    { id: 'form5', label: 'Form Five', icon: '🔭' },
+    { id: 'form6', label: 'Form Six',  icon: '🎓' },
+  ]
+};
+
+const SUBJECTS = {
+  primary: [
+    { id: 'math',    label: 'Hesabu',    icon: '➕' },
+    { id: 'swahili', label: 'Kiswahili', icon: '📝' },
+    { id: 'science', label: 'Sayansi',   icon: '🔬' },
+  ],
+  ordinary: [
+    { id: 'math',    label: 'Basic Mathematics',  icon: '📐' },
+    { id: 'physics', label: 'Physics',   icon: '⚡' },
+    { id: 'chem',    label: 'Chemistry',     icon: '🧪' },
+  ],
+  advanced: [
+    { id: 'admath',  label: 'Advanced Mathematics',  icon: '📐' },
+    { id: 'physics', label: 'Physics',   icon: '⚡' },
+    { id: 'chem',    label: 'Chemistry',     icon: '🧪' },
+  ]
+};
+
+const LEVEL_LABELS = { primary: 'Primary', ordinary: 'O-Level', advanced: 'A-Level' };
+const LEVEL_COLORS = { primary: '#1565c0', ordinary: '#2e7d32', advanced: '#6a1b9a' };
+
+let state = { level: null, classId: null, subjectId: null, activeNoteIndex: null };
+
+function escHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  let parts = [`<span class="crumb" onclick="goHome()">🏠 Nyumbani</span>`];
+  if (state.level) {
+    parts.push(`<span class="sep">›</span>`);
+    parts.push(`<span class="crumb" onclick="goToClasses('${state.level}')">${LEVEL_LABELS[state.level]}</span>`);
+  }
+  if (state.classId) {
+    const cls = CLASSES[state.level].find(c => c.id === state.classId);
+    parts.push(`<span class="sep">›</span>`);
+    parts.push(`<span class="crumb" onclick="goToSubjects('${state.classId}')">${cls.label}</span>`);
+  }
+  if (state.subjectId) {
+    const sub = SUBJECTS[state.level].find(s => s.id === state.subjectId);
+    parts.push(`<span class="sep">›</span>`);
+    parts.push(`<span class="crumb">${sub.label}</span>`);
+  }
+  bc.innerHTML = parts.join('');
+}
+
+function goHome() {
+  state = { level: null, classId: null, subjectId: null, activeNoteIndex: null };
+  updateBreadcrumb();
+  showPage('home');
+}
+
+function goToClasses(level) {
+  state.level = level; state.classId = null; state.subjectId = null;
+  const color = LEVEL_COLORS[level];
+  
+  const badge = document.getElementById('levelBadge');
+  badge.textContent = LEVEL_LABELS[level];
+  badge.style.background = color;
+  
+  document.getElementById('classesTitle').textContent = 'Chagua Darasa / Kidato';
+  const grid = document.getElementById('classesGrid');
+  grid.innerHTML = '';
+  
+  CLASSES[level].forEach(cls => {
+    const card = document.createElement('div');
+    card.className = 'class-card';
+    card.style.setProperty('--active', color);
+    card.innerHTML = `<div class="class-icon">${cls.icon}</div><h3>${cls.label}</h3>`;
+    card.onclick = () => goToSubjects(cls.id);
+    grid.appendChild(card);
+  });
+  updateBreadcrumb();
+  showPage('classes');
+}
+
+function goToSubjects(classId) {
+  state.classId = classId; state.subjectId = null;
+  const cls = CLASSES[state.level].find(c => c.id === classId);
+  const color = LEVEL_COLORS[state.level];
+  
+  const badge = document.getElementById('levelBadge2');
+  badge.textContent = LEVEL_LABELS[state.level];
+  badge.style.background = color;
+  
+  document.getElementById('subjectsTitle').textContent = `${cls.label} — Chagua Somo`;
+  const grid = document.getElementById('subjectsGrid');
+  grid.innerHTML = '';
+  
+  SUBJECTS[state.level].forEach(sub => {
+    const card = document.createElement('div');
+    card.className = 'subject-card';
+    card.style.cssText = `--active: ${color}`;
+    card.innerHTML = `<div class="subj-icon">${sub.icon}</div><h3>${sub.label}</h3>`;
+    card.onclick = () => goToNotes(sub.id);
+    grid.appendChild(card);
+  });
+  updateBreadcrumb();
+  showPage('subjects');
+}
+
+function goToNotes(subjectId) {
+  state.subjectId = subjectId; state.activeNoteIndex = null;
+  const sub = SUBJECTS[state.level].find(s => s.id === subjectId);
+  const cls = CLASSES[state.level].find(c => c.id === state.classId);
+  const color = LEVEL_COLORS[state.level];
+  
+  const badge = document.getElementById('levelBadge3');
+  badge.textContent = LEVEL_LABELS[state.level];
+  badge.style.background = color;
+  
+  document.getElementById('notesTitle').textContent = `${cls.label} › ${sub.icon} ${sub.label}`;
+  
+  renderNotesSidebar();
+  resetReader();
+  updateBreadcrumb();
+  showPage('notes');
+}
+
+function renderNotesSidebar() {
+  const key = `${state.level}__${state.classId}__${state.subjectId}`;
+  const notes = MY_DATABASE[key] || [];
+  const list = document.getElementById('notesList');
+  list.innerHTML = '';
+  
+  if(notes.length === 0) {
+    list.innerHTML = '<div class="empty-message">Notes za somo hili bado hazijawekwa.</div>';
+    return;
+  }
+  
+  notes.forEach((n, idx) => {
+    const item = document.createElement('div');
+    item.className = 'note-item' + (idx === state.activeNoteIndex ? ' active' : '');
+    item.innerHTML = `<h4>${escHtml(n.title)}</h4>`;
+    item.onclick = () => openNote(idx);
+    list.appendChild(item);
+  });
+}
+
+function resetReader() {
+  document.getElementById('noteReader').innerHTML = `
+    <div class="reader-placeholder">
+      <div class="big-icon">📖</div>
+      <p>Chagua mada upande wa kushoto ili kuanza kusoma notes</p>
+    </div>`;
+}
+
+function openNote(index) {
+  state.activeNoteIndex = index;
+  const key = `${state.level}__${state.classId}__${state.subjectId}`;
+  const note = MY_DATABASE[key][index];
+  if (!note) return;
+  
+  renderNotesSidebar();
+  if (note.type === 'interactive') {
+    document.getElementById('noteReader').innerHTML = `
+      <div class="note-reading-header">
+        <h2 class="note-reading-title">${escHtml(note.title)}</h2>
+      </div>
+      <div class="note-reading-body">${note.body}</div>`;
+    attachInteractiveHandlers();
+  } else {
+    document.getElementById('noteReader').innerHTML = `
+      <div class="note-reading-header">
+        <h2 class="note-reading-title">${escHtml(note.title)}</h2>
+      </div>
+      <div class="note-reading-body">${escHtml(note.body)}</div>`;
+  }
+}
+
+function attachInteractiveHandlers() {
+  const start = document.getElementById('hesabu-start');
+  const stop = document.getElementById('hesabu-stop');
+  const reset = document.getElementById('hesabu-reset');
+  if (start) start.onclick = hesabuLoop;
+  if (stop) stop.onclick = simamishaLoop;
+  if (reset) reset.onclick = resetLoop;
+  resetLoop();
+}
+
+const MANENO = ['sifuri', 'Moja', 'Mbili', 'Tatu', 'Nne', 'Tano', 'Sita', 'Saba', 'Nane', 'Tisa', 'Kumi'];
+let loopTimer = null;
+let nambariSasa = 0;
+
+function hesabuLoop() {
+  simamishaLoop();
+  nambariSasa = 0;
+  resetVizuizi();
+  hatua();
+}
+
+function hatua() {
+  nambariSasa++;
+  if (nambariSasa > 100) {
+    document.getElementById('hesabu-maneno').textContent = '🎉 Hongera! Umehesabu hadi 100!';
+    document.getElementById('hesabu-display').textContent = '100🔥';
+    document.getElementById('hesabu-display').style.color = '#16a34a';
+    highlightCell(10);
+    return;
+  }
+
+  document.getElementById('hesabu-display').textContent = nambariSasa;
+  document.getElementById('hesabu-maneno').textContent = MANENO[nambariSasa];
+  highlightCell(nambariSasa);
+  loopTimer = setTimeout(hatua, 1000);
+}
+
+function simamishaLoop() {
+  if (loopTimer) {
+    clearTimeout(loopTimer);
+    loopTimer = null;
+  }
+}
+
+function resetLoop() {
+  simamishaLoop();
+  nambariSasa = 0;
+  const display = document.getElementById('hesabu-display');
+  const maneno = document.getElementById('hesabu-maneno');
+  if (display) display.textContent = '—';
+  if (display) display.style.color = '#1565c0';
+  if (maneno) maneno.textContent = '';
+  resetVizuizi();
+}
+
+function resetVizuizi() {
+  document.querySelectorAll('[id^="cell-"]').forEach(cell => {
+    cell.style.background = 'white';
+    cell.style.border = '2px solid #e5e7eb';
+    cell.style.color = '#111827';
+  });
+}
+
+function highlightCell(n) {
+  resetVizuizi();
+  const cell = document.getElementById(`cell-${n}`);
+  if (cell) {
+    cell.style.background = '#bfdbfe';
+    cell.style.border = '2px solid #2563eb';
+  }
+}
+</script>
+</body>
+</html>
