@@ -71,7 +71,7 @@
     </div>
 
 <script>
-// --- mda wa kuanza discussion ---
+// starting time
 const startTime = new Date();
 startTime.setHours(17, 40, 0, 0);
 
@@ -99,8 +99,6 @@ updateTime();
 // --- SCRIPT MPYA YA MAHUDHURIO ---
 let presentCount = 0;
 let absentCount = 0;
-
-// Ficha au onyesha kisanduku cha sababu kulingana na chaguo la mtumiaji
 function toggleReasonField() {
     const status = document.getElementById("attendance-status").value;
     const reasonGroup = document.getElementById("reason-group");
@@ -114,7 +112,7 @@ function toggleReasonField() {
     }
 }
 
-// Ongeza mwanachama kwenye jedwali na sasisha idadi
+// ongeza
 function addAttendance(event) {
     event.preventDefault(); // Kuzuia page isijirefresh
 
